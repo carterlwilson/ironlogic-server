@@ -1,0 +1,565 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-06-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_ironlogic",
+      "parentId": null,
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "IronLogic Server",
+      "description": "Fitness training application API",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_ironlogic",
+      "parentId": "wrk_ironlogic",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000"
+      },
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_users",
+      "parentId": "wrk_ironlogic",
+      "name": "Users",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_users_get_all",
+      "parentId": "fld_users",
+      "name": "Get All Users",
+      "method": "GET",
+      "url": "{{ base_url }}/users",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_get_by_id",
+      "parentId": "fld_users",
+      "name": "Get User by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/users/{userId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_create",
+      "parentId": "fld_users",
+      "name": "Create User",
+      "method": "POST",
+      "url": "{{ base_url }}/users",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"role\": \"trainer\",\n  \"phone\": \"+1234567890\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_update",
+      "parentId": "fld_users",
+      "name": "Update User",
+      "method": "PUT",
+      "url": "{{ base_url }}/users/{userId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"John Doe Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"role\": \"trainer\",\n  \"phone\": \"+1234567890\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_patch",
+      "parentId": "fld_users",
+      "name": "Patch User",
+      "method": "PATCH",
+      "url": "{{ base_url }}/users/{userId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"phone\": \"+1234567899\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_delete",
+      "parentId": "fld_users",
+      "name": "Delete User",
+      "method": "DELETE",
+      "url": "{{ base_url }}/users/{userId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_clients",
+      "parentId": "wrk_ironlogic",
+      "name": "Clients",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_clients_get_all",
+      "parentId": "fld_clients",
+      "name": "Get All Clients",
+      "method": "GET",
+      "url": "{{ base_url }}/clients",
+      "_type": "request"
+    },
+    {
+      "_id": "req_clients_get_by_id",
+      "parentId": "fld_clients",
+      "name": "Get Client by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/clients/{clientId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_clients_create",
+      "parentId": "fld_clients",
+      "name": "Create Client",
+      "method": "POST",
+      "url": "{{ base_url }}/clients",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"+1987654321\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"female\",\n  \"height\": 165,\n  \"weight\": 65,\n  \"fitnessGoals\": [\"strength\", \"endurance\"],\n  \"medicalConditions\": [\"none\"],\n  \"emergencyContact\": {\n    \"name\": \"John Smith\",\n    \"relationship\": \"spouse\",\n    \"phone\": \"+1987654322\"\n  },\n  \"trainerId\": \"{trainerId}\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_clients_update",
+      "parentId": "fld_clients",
+      "name": "Update Client",
+      "method": "PUT",
+      "url": "{{ base_url }}/clients/{clientId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Jane Smith Updated\",\n  \"email\": \"jane.updated@example.com\",\n  \"phone\": \"+1987654321\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"female\",\n  \"height\": 165,\n  \"weight\": 63,\n  \"fitnessGoals\": [\"strength\", \"endurance\", \"weight_loss\"],\n  \"medicalConditions\": [\"none\"],\n  \"emergencyContact\": {\n    \"name\": \"John Smith\",\n    \"relationship\": \"spouse\",\n    \"phone\": \"+1987654322\"\n  },\n  \"trainerId\": \"{trainerId}\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_clients_patch",
+      "parentId": "fld_clients",
+      "name": "Patch Client",
+      "method": "PATCH",
+      "url": "{{ base_url }}/clients/{clientId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"weight\": 70\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_clients_delete",
+      "parentId": "fld_clients",
+      "name": "Delete Client",
+      "method": "DELETE",
+      "url": "{{ base_url }}/clients/{clientId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_activity_groups",
+      "parentId": "wrk_ironlogic",
+      "name": "Activity Groups",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_activity_groups_get_all",
+      "parentId": "fld_activity_groups",
+      "name": "Get All Activity Groups",
+      "method": "GET",
+      "url": "{{ base_url }}/activity-groups",
+      "_type": "request"
+    },
+    {
+      "_id": "req_activity_groups_get_by_id",
+      "parentId": "fld_activity_groups",
+      "name": "Get Activity Group by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/activity-groups/{activityGroupId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_activity_groups_create",
+      "parentId": "fld_activity_groups",
+      "name": "Create Activity Group",
+      "method": "POST",
+      "url": "{{ base_url }}/activity-groups",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Upper Body Strength\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_activity_groups_update",
+      "parentId": "fld_activity_groups",
+      "name": "Update Activity Group",
+      "method": "PUT",
+      "url": "{{ base_url }}/activity-groups/{activityGroupId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Upper Body Strength Updated\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_activity_groups_patch",
+      "parentId": "fld_activity_groups",
+      "name": "Patch Activity Group",
+      "method": "PATCH",
+      "url": "{{ base_url }}/activity-groups/{activityGroupId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Upper Body Strength Patched\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_activity_groups_delete",
+      "parentId": "fld_activity_groups",
+      "name": "Delete Activity Group",
+      "method": "DELETE",
+      "url": "{{ base_url }}/activity-groups/{activityGroupId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_primary_lifts",
+      "parentId": "wrk_ironlogic",
+      "name": "Primary Lift Activities",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_primary_lifts_get_all",
+      "parentId": "fld_primary_lifts",
+      "name": "Get All Primary Lift Activities",
+      "method": "GET",
+      "url": "{{ base_url }}/primary-lift-activities",
+      "_type": "request"
+    },
+    {
+      "_id": "req_primary_lifts_get_by_id",
+      "parentId": "fld_primary_lifts",
+      "name": "Get Primary Lift by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/primary-lift-activities/{primaryLiftId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_primary_lifts_create",
+      "parentId": "fld_primary_lifts",
+      "name": "Create Primary Lift Activity",
+      "method": "POST",
+      "url": "{{ base_url }}/primary-lift-activities",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Bench Press\",\n  \"notes\": \"Classic chest exercise\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"weight\": 135,\n  \"sets\": 3,\n  \"repetitions\": 5\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_primary_lifts_update",
+      "parentId": "fld_primary_lifts",
+      "name": "Update Primary Lift Activity",
+      "method": "PUT",
+      "url": "{{ base_url }}/primary-lift-activities/{primaryLiftId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Bench Press Updated\",\n  \"notes\": \"Updated notes\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"weight\": 145,\n  \"sets\": 4,\n  \"repetitions\": 6\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_primary_lifts_patch",
+      "parentId": "fld_primary_lifts",
+      "name": "Patch Primary Lift Activity",
+      "method": "PATCH",
+      "url": "{{ base_url }}/primary-lift-activities/{primaryLiftId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"weight\": 150\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_primary_lifts_delete",
+      "parentId": "fld_primary_lifts",
+      "name": "Delete Primary Lift Activity",
+      "method": "DELETE",
+      "url": "{{ base_url }}/primary-lift-activities/{primaryLiftId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_accessory_lifts",
+      "parentId": "wrk_ironlogic",
+      "name": "Accessory Lift Activities",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_accessory_lifts_get_all",
+      "parentId": "fld_accessory_lifts",
+      "name": "Get All Accessory Lift Activities",
+      "method": "GET",
+      "url": "{{ base_url }}/accessory-lift-activities",
+      "_type": "request"
+    },
+    {
+      "_id": "req_accessory_lifts_get_by_id",
+      "parentId": "fld_accessory_lifts",
+      "name": "Get Accessory Lift by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/accessory-lift-activities/{accessoryLiftId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_accessory_lifts_create",
+      "parentId": "fld_accessory_lifts",
+      "name": "Create Accessory Lift Activity",
+      "method": "POST",
+      "url": "{{ base_url }}/accessory-lift-activities",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Dumbbell Flyes\",\n  \"notes\": \"Isolation exercise for chest\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"weight\": 25,\n  \"sets\": 3,\n  \"repetitions\": 12\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_accessory_lifts_update",
+      "parentId": "fld_accessory_lifts",
+      "name": "Update Accessory Lift Activity",
+      "method": "PUT",
+      "url": "{{ base_url }}/accessory-lift-activities/{accessoryLiftId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Dumbbell Flyes Updated\",\n  \"notes\": \"Updated notes\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"weight\": 30,\n  \"sets\": 4,\n  \"repetitions\": 10\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_accessory_lifts_patch",
+      "parentId": "fld_accessory_lifts",
+      "name": "Patch Accessory Lift Activity",
+      "method": "PATCH",
+      "url": "{{ base_url }}/accessory-lift-activities/{accessoryLiftId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"weight\": 35\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_accessory_lifts_delete",
+      "parentId": "fld_accessory_lifts",
+      "name": "Delete Accessory Lift Activity",
+      "method": "DELETE",
+      "url": "{{ base_url }}/accessory-lift-activities/{accessoryLiftId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_other_activities",
+      "parentId": "wrk_ironlogic",
+      "name": "Other Activities",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_other_activities_get_all",
+      "parentId": "fld_other_activities",
+      "name": "Get All Other Activities",
+      "method": "GET",
+      "url": "{{ base_url }}/other-activities",
+      "_type": "request"
+    },
+    {
+      "_id": "req_other_activities_get_by_id",
+      "parentId": "fld_other_activities",
+      "name": "Get Other Activity by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/other-activities/{otherActivityId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_other_activities_create",
+      "parentId": "fld_other_activities",
+      "name": "Create Other Activity",
+      "method": "POST",
+      "url": "{{ base_url }}/other-activities",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Cardio Session\",\n  \"notes\": \"Moderate intensity cardio\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"measurementNotes\": \"30 min treadmill\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_other_activities_update",
+      "parentId": "fld_other_activities",
+      "name": "Update Other Activity",
+      "method": "PUT",
+      "url": "{{ base_url }}/other-activities/{otherActivityId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Cardio Session Updated\",\n  \"notes\": \"High intensity\",\n  \"activityGroupId\": \"{activityGroupId}\",\n  \"measurementNotes\": \"25 min intervals\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_other_activities_patch",
+      "parentId": "fld_other_activities",
+      "name": "Patch Other Activity",
+      "method": "PATCH",
+      "url": "{{ base_url }}/other-activities/{otherActivityId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"measurementNotes\": \"35 min walk\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_other_activities_delete",
+      "parentId": "fld_other_activities",
+      "name": "Delete Other Activity",
+      "method": "DELETE",
+      "url": "{{ base_url }}/other-activities/{otherActivityId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_benchmark_templates",
+      "parentId": "wrk_ironlogic",
+      "name": "Benchmark Templates",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_benchmark_templates_get_all",
+      "parentId": "fld_benchmark_templates",
+      "name": "Get All Benchmark Templates",
+      "method": "GET",
+      "url": "{{ base_url }}/benchmark-templates",
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_get_by_id",
+      "parentId": "fld_benchmark_templates",
+      "name": "Get Benchmark Template by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/benchmark-templates/{benchmarkTemplateId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_get_by_type",
+      "parentId": "fld_benchmark_templates",
+      "name": "Get Benchmark Templates by Type",
+      "method": "GET",
+      "url": "{{ base_url }}/benchmark-templates/type/{type}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_create",
+      "parentId": "fld_benchmark_templates",
+      "name": "Create Benchmark Template",
+      "method": "POST",
+      "url": "{{ base_url }}/benchmark-templates",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Strength Assessment\",\n  \"notes\": \"Comprehensive strength testing\",\n  \"benchmarkType\": \"strength\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_update",
+      "parentId": "fld_benchmark_templates",
+      "name": "Update Benchmark Template",
+      "method": "PUT",
+      "url": "{{ base_url }}/benchmark-templates/{benchmarkTemplateId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Strength Assessment Updated\",\n  \"notes\": \"Updated notes\",\n  \"benchmarkType\": \"strength\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_patch",
+      "parentId": "fld_benchmark_templates",
+      "name": "Patch Benchmark Template",
+      "method": "PATCH",
+      "url": "{{ base_url }}/benchmark-templates/{benchmarkTemplateId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"notes\": \"Patched notes\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_benchmark_templates_delete",
+      "parentId": "fld_benchmark_templates",
+      "name": "Delete Benchmark Template",
+      "method": "DELETE",
+      "url": "{{ base_url }}/benchmark-templates/{benchmarkTemplateId}",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_schedules",
+      "parentId": "wrk_ironlogic",
+      "name": "Schedules",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_schedules_get_all",
+      "parentId": "fld_schedules",
+      "name": "Get All Schedules",
+      "method": "GET",
+      "url": "{{ base_url }}/schedules",
+      "_type": "request"
+    },
+    {
+      "_id": "req_schedules_get_by_id",
+      "parentId": "fld_schedules",
+      "name": "Get Schedule by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "_type": "request"
+    },
+    {
+      "_id": "req_schedules_create",
+      "parentId": "fld_schedules",
+      "name": "Create Schedule",
+      "method": "POST",
+      "url": "{{ base_url }}/schedules",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Summer Strength\",\n  \"blocks\": []\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_schedules_update",
+      "parentId": "fld_schedules",
+      "name": "Update Schedule",
+      "method": "PUT",
+      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Summer Strength Updated\",\n  \"blocks\": []\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_schedules_patch",
+      "parentId": "fld_schedules",
+      "name": "Patch Schedule",
+      "method": "PATCH",
+      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Patched Name\"\n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_schedules_delete",
+      "parentId": "fld_schedules",
+      "name": "Delete Schedule",
+      "method": "DELETE",
+      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "_type": "request"
+    }
+  ]
+} 

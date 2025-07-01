@@ -1,0 +1,3967 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "IronLogic Fitness Training API",
+    "description": "API for managing fitness training data including clients, activities, schedules, and benchmarks",
+    "version": "1.0.0",
+    "contact": {
+      "name": "IronLogic API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication and session management"
+    },
+    {
+      "name": "Users",
+      "description": "User management (admin only)"
+    },
+    {
+      "name": "Clients",
+      "description": "Client management"
+    },
+    {
+      "name": "Benchmarks",
+      "description": "Benchmarks and benchmark templates"
+    },
+    {
+      "name": "Activities",
+      "description": "Activity groups, templates, and activities"
+    },
+    {
+      "name": "Schedules",
+      "description": "Schedules and training blocks"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "description": "Check if the API and database are running",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "OK"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "Connected"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "description": "Create a new user account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address (used as username)"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "User's password (minimum 6 characters)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 50,
+                    "description": "User's full name (optional)"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["admin", "trainer", "user"],
+                    "default": "user",
+                    "description": "User's role (defaults to 'user')"
+                  }
+                }
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "password123",
+                "name": "John Doe",
+                "role": "user"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or user already exists"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login user",
+        "description": "Authenticate user with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "User's password"
+                  }
+                }
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout user",
+        "description": "End the current user session",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user",
+        "description": "Get information about the currently authenticated user",
+        "responses": {
+          "200": {
+            "description": "Current user information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Change password",
+        "description": "Change the current user's password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "description": "Current password"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "New password (minimum 6 characters)"
+                  }
+                }
+              },
+              "example": {
+                "currentPassword": "oldpassword123",
+                "newPassword": "newpassword123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Current password is incorrect"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "description": "Retrieve a list of all users (admin only)",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a new user",
+        "description": "Create a new user account (admin only)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "User's password"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 50,
+                    "description": "User's full name"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["admin", "trainer", "user"],
+                    "default": "user",
+                    "description": "User's role"
+                  }
+                }
+              },
+              "example": {
+                "email": "trainer@example.com",
+                "password": "password123",
+                "name": "Jane Trainer",
+                "role": "trainer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user by ID",
+        "description": "Get a specific user by ID (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user",
+        "description": "Update a user's information (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 50
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["admin", "trainer", "user"]
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user",
+        "description": "Delete a user (admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      }
+    },
+    "/clients": {
+      "get": {
+        "tags": ["Clients"],
+        "summary": "Get all clients",
+        "description": "Retrieve a list of all clients",
+        "responses": {
+          "200": {
+            "description": "List of clients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Client"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Clients"],
+        "summary": "Create a new client",
+        "description": "Create a new client record",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "firstName", "lastName", "userId", "weight"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Client's email address"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "Client's first name"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "Client's last name"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "description": "Reference to the user account"
+                  },
+                  "liftBenchmarks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LiftBenchmark"
+                    },
+                    "description": "Client's lift benchmarks"
+                  },
+                  "otherBenchmarks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/OtherBenchmark"
+                    },
+                    "description": "Client's other benchmarks"
+                  },
+                  "scheduleId": {
+                    "type": "string",
+                    "description": "Reference to the client's schedule"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Client's current weight"
+                  }
+                }
+              },
+              "example": {
+                "email": "client@example.com",
+                "firstName": "John",
+                "lastName": "Doe",
+                "userId": "user123",
+                "weight": 180,
+                "liftBenchmarks": [],
+                "otherBenchmarks": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Client"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/clients/{id}": {
+      "get": {
+        "tags": ["Clients"],
+        "summary": "Get client by ID",
+        "description": "Get a specific client by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Client ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Client"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Clients"],
+        "summary": "Update client",
+        "description": "Update a client's information",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Client ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "liftBenchmarks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LiftBenchmark"
+                    }
+                  },
+                  "otherBenchmarks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/OtherBenchmark"
+                    }
+                  },
+                  "scheduleId": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Client"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Clients"],
+        "summary": "Delete client",
+        "description": "Delete a client",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Client ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/benchmark-templates": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get all benchmark templates",
+        "description": "Retrieve a list of all benchmark templates",
+        "responses": {
+          "200": {
+            "description": "List of benchmark templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BenchmarkTemplate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Benchmarks"],
+        "summary": "Create a new benchmark template",
+        "description": "Create a new benchmark template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "benchmarkType"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Template name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Template notes"
+                  },
+                  "benchmarkType": {
+                    "type": "string",
+                    "enum": ["Lift", "Other"],
+                    "description": "Type of benchmark"
+                  }
+                }
+              },
+              "example": {
+                "name": "Bench Press Max",
+                "notes": "1RM bench press template",
+                "benchmarkType": "Lift"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Benchmark template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BenchmarkTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/benchmark-templates/{id}": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get benchmark template by ID",
+        "description": "Get a specific benchmark template by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Benchmark template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Benchmark template found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BenchmarkTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Benchmark template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Benchmarks"],
+        "summary": "Update benchmark template",
+        "description": "Update a benchmark template",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Benchmark template ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "benchmarkType"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "benchmarkType": {
+                    "type": "string",
+                    "enum": ["Lift", "Other"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Benchmark template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BenchmarkTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Benchmark template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Benchmarks"],
+        "summary": "Delete benchmark template",
+        "description": "Delete a benchmark template",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Benchmark template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Benchmark template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Benchmark template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/lift-benchmarks": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get all lift benchmarks",
+        "description": "Retrieve a list of all lift benchmarks",
+        "responses": {
+          "200": {
+            "description": "List of lift benchmarks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LiftBenchmark"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Benchmarks"],
+        "summary": "Create a new lift benchmark",
+        "description": "Create a new lift benchmark",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "weight"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Benchmark name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Benchmark notes"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Weight achieved"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string",
+                    "description": "Reference to benchmark template"
+                  }
+                }
+              },
+              "example": {
+                "name": "Bench Press Max",
+                "notes": "1RM bench press",
+                "weight": 225,
+                "benchmarkTemplateId": "template123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lift benchmark created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LiftBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/lift-benchmarks/{id}": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get lift benchmark by ID",
+        "description": "Get a specific lift benchmark by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Lift benchmark ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lift benchmark found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LiftBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lift benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Benchmarks"],
+        "summary": "Update lift benchmark",
+        "description": "Update a lift benchmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Lift benchmark ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "weight"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lift benchmark updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LiftBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lift benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Benchmarks"],
+        "summary": "Delete lift benchmark",
+        "description": "Delete a lift benchmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Lift benchmark ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lift benchmark deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lift benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/other-benchmarks": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get all other benchmarks",
+        "description": "Retrieve a list of all other benchmarks",
+        "responses": {
+          "200": {
+            "description": "List of other benchmarks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OtherBenchmark"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Benchmarks"],
+        "summary": "Create a new other benchmark",
+        "description": "Create a new other benchmark",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Benchmark name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Benchmark notes"
+                  },
+                  "measurementNotes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Measurement details"
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Numeric value"
+                  },
+                  "unit": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "description": "Unit of measurement"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string",
+                    "description": "Reference to benchmark template"
+                  }
+                }
+              },
+              "example": {
+                "name": "5K Run Time",
+                "notes": "Personal best 5K time",
+                "measurementNotes": "Measured on track",
+                "value": 22.5,
+                "unit": "minutes",
+                "benchmarkTemplateId": "template456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Other benchmark created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/other-benchmarks/{id}": {
+      "get": {
+        "tags": ["Benchmarks"],
+        "summary": "Get other benchmark by ID",
+        "description": "Get a specific other benchmark by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other benchmark ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Other benchmark found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Benchmarks"],
+        "summary": "Update other benchmark",
+        "description": "Update an other benchmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other benchmark ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "measurementNotes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "unit": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Other benchmark updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherBenchmark"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Benchmarks"],
+        "summary": "Delete other benchmark",
+        "description": "Delete an other benchmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other benchmark ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Other benchmark deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other benchmark not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/activity-templates": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get all activity templates",
+        "description": "Retrieve a list of all activity templates",
+        "responses": {
+          "200": {
+            "description": "List of activity templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityTemplate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a new activity template",
+        "description": "Create a new activity template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "activityType"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Template name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Template notes"
+                  },
+                  "activityType": {
+                    "type": "string",
+                    "enum": ["PrimaryLift", "AccessoryLift", "Other"],
+                    "description": "Type of activity"
+                  }
+                }
+              },
+              "example": {
+                "name": "Bench Press Template",
+                "notes": "Standard bench press template",
+                "activityType": "PrimaryLift"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Activity template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/activity-templates/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get activity template by ID",
+        "description": "Get a specific activity template by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity template found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Activities"],
+        "summary": "Update activity template",
+        "description": "Update an activity template",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity template ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "activityType"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "activityType": {
+                    "type": "string",
+                    "enum": ["PrimaryLift", "AccessoryLift", "Other"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activity template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete activity template",
+        "description": "Delete an activity template",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity template not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/activity-groups": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get all activity groups",
+        "description": "Retrieve a list of all activity groups",
+        "responses": {
+          "200": {
+            "description": "List of activity groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityGroup"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a new activity group",
+        "description": "Create a new activity group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Group name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Group notes"
+                  }
+                }
+              },
+              "example": {
+                "name": "Push Day",
+                "notes": "Chest, shoulders, triceps"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Activity group created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityGroup"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/activity-groups/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get activity group by ID",
+        "description": "Get a specific activity group by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity group ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity group found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityGroup"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity group not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Activities"],
+        "summary": "Update activity group",
+        "description": "Update an activity group",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity group ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activity group updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActivityGroup"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity group not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete activity group",
+        "description": "Delete an activity group",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activity group ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity group deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity group not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/primary-lift-activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get all primary lift activities",
+        "description": "Retrieve a list of all primary lift activities",
+        "responses": {
+          "200": {
+            "description": "List of primary lift activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PrimaryLiftActivity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a new primary lift activity",
+        "description": "Create a new primary lift activity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "sets", "repetitions", "percentOfMax"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Activity name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Activity notes"
+                  },
+                  "sets": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of sets"
+                  },
+                  "repetitions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of repetitions per set"
+                  },
+                  "percentOfMax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Percentage of max weight"
+                  },
+                  "activityTemplateId": {
+                    "type": "string",
+                    "description": "Reference to activity template"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string",
+                    "description": "Reference to benchmark template"
+                  }
+                }
+              },
+              "example": {
+                "name": "Bench Press",
+                "notes": "3x5 bench press",
+                "sets": 3,
+                "repetitions": 5,
+                "percentOfMax": 85,
+                "activityTemplateId": "template123",
+                "benchmarkTemplateId": "benchmark123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Primary lift activity created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrimaryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/primary-lift-activities/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get primary lift activity by ID",
+        "description": "Get a specific primary lift activity by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Primary lift activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Primary lift activity found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrimaryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Primary lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Activities"],
+        "summary": "Update primary lift activity",
+        "description": "Update a primary lift activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Primary lift activity ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "sets", "repetitions", "percentOfMax"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "sets": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "repetitions": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "percentOfMax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "activityTemplateId": {
+                    "type": "string"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Primary lift activity updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrimaryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Primary lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete primary lift activity",
+        "description": "Delete a primary lift activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Primary lift activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Primary lift activity deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Primary lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/accessory-lift-activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get all accessory lift activities",
+        "description": "Retrieve a list of all accessory lift activities",
+        "responses": {
+          "200": {
+            "description": "List of accessory lift activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccessoryLiftActivity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a new accessory lift activity",
+        "description": "Create a new accessory lift activity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "sets", "repetitions", "percentOfMax"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Activity name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Activity notes"
+                  },
+                  "sets": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of sets"
+                  },
+                  "repetitions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of repetitions per set"
+                  },
+                  "percentOfMax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Percentage of max weight"
+                  },
+                  "activityTemplateId": {
+                    "type": "string",
+                    "description": "Reference to activity template"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string",
+                    "description": "Reference to benchmark template"
+                  }
+                }
+              },
+              "example": {
+                "name": "Dumbbell Flyes",
+                "notes": "3x12 dumbbell flyes",
+                "sets": 3,
+                "repetitions": 12,
+                "percentOfMax": 70,
+                "activityTemplateId": "template456",
+                "benchmarkTemplateId": "benchmark456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accessory lift activity created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AccessoryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/accessory-lift-activities/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get accessory lift activity by ID",
+        "description": "Get a specific accessory lift activity by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Accessory lift activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accessory lift activity found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AccessoryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Accessory lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Activities"],
+        "summary": "Update accessory lift activity",
+        "description": "Update an accessory lift activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Accessory lift activity ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "sets", "repetitions", "percentOfMax"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "sets": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "repetitions": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "percentOfMax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "activityTemplateId": {
+                    "type": "string"
+                  },
+                  "benchmarkTemplateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accessory lift activity updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AccessoryLiftActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Accessory lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete accessory lift activity",
+        "description": "Delete an accessory lift activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Accessory lift activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accessory lift activity deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Accessory lift activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/other-activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get all other activities",
+        "description": "Retrieve a list of all other activities",
+        "responses": {
+          "200": {
+            "description": "List of other activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OtherActivity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a new other activity",
+        "description": "Create a new other activity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Activity name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Activity notes"
+                  },
+                  "measurementNotes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Measurement details"
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Numeric value"
+                  },
+                  "unit": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "description": "Unit of measurement"
+                  },
+                  "activityTemplateId": {
+                    "type": "string",
+                    "description": "Reference to activity template"
+                  }
+                }
+              },
+              "example": {
+                "name": "Cardio Session",
+                "notes": "30 minute run",
+                "measurementNotes": "Treadmill at 6.0 mph",
+                "value": 30,
+                "unit": "minutes",
+                "activityTemplateId": "template789"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Other activity created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/other-activities/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get other activity by ID",
+        "description": "Get a specific other activity by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Other activity found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Activities"],
+        "summary": "Update other activity",
+        "description": "Update an other activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other activity ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "measurementNotes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "unit": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "activityTemplateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Other activity updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OtherActivity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete other activity",
+        "description": "Delete an other activity",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Other activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Other activity deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Other activity not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/schedules": {
+      "get": {
+        "tags": ["Schedules"],
+        "summary": "Get all schedules",
+        "description": "Retrieve a list of all schedules",
+        "responses": {
+          "200": {
+            "description": "List of schedules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Schedule"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Schedules"],
+        "summary": "Create a new schedule",
+        "description": "Create a new schedule",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Schedule name"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Schedule notes"
+                  },
+                  "weeks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Week"
+                    },
+                    "description": "Array of weeks in the schedule"
+                  }
+                }
+              },
+              "example": {
+                "name": "12-Week Strength Program",
+                "notes": "Progressive overload program",
+                "weeks": [
+                  {
+                    "weekNumber": 1,
+                    "days": [
+                      {
+                        "dayNumber": 1,
+                        "activityGroups": [
+                          {
+                            "name": "Push Day",
+                            "activities": [
+                              {
+                                "name": "Bench Press",
+                                "sets": 3,
+                                "repetitions": 5,
+                                "percentOfMax": 85,
+                                "activityType": "PrimaryLift"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Schedule created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/schedules/{id}": {
+      "get": {
+        "tags": ["Schedules"],
+        "summary": "Get schedule by ID",
+        "description": "Get a specific schedule by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Schedule ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Schedule not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Schedules"],
+        "summary": "Update schedule",
+        "description": "Update a schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Schedule ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "weeks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Week"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Schedule updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Schedule not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Schedules"],
+        "summary": "Delete schedule",
+        "description": "Delete a schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Schedule ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Schedule not found"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email (used as username)"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "User's full name (optional)"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "user"],
+            "default": "user",
+            "description": "User role"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["email", "role"]
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Client ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Client name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Client email"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Client phone number"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Client notes"
+          },
+          "liftBenchmarks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiftBenchmark"
+            },
+            "description": "Array of lift benchmarks"
+          },
+          "otherBenchmarks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OtherBenchmark"
+            },
+            "description": "Array of other benchmarks"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Reference to user"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "email"]
+      },
+      "BenchmarkTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Template name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Template notes"
+          },
+          "benchmarkType": {
+            "type": "string",
+            "enum": ["Lift", "Other"],
+            "description": "Type of benchmark"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "benchmarkType"]
+      },
+      "LiftBenchmark": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Benchmark ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Benchmark name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Benchmark notes"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Weight achieved"
+          },
+          "benchmarkTemplateId": {
+            "type": "string",
+            "description": "Reference to benchmark template"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "weight"]
+      },
+      "OtherBenchmark": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Benchmark ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Benchmark name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Benchmark notes"
+          },
+          "measurementNotes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Measurement details"
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Numeric value"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Unit of measurement"
+          },
+          "benchmarkTemplateId": {
+            "type": "string",
+            "description": "Reference to benchmark template"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name"]
+      },
+      "ActivityTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Template name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Template notes"
+          },
+          "activityType": {
+            "type": "string",
+            "enum": ["PrimaryLift", "AccessoryLift", "Other"],
+            "description": "Type of activity"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "activityType"]
+      },
+      "ActivityGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Group ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Group name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Group notes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name"]
+      },
+      "PrimaryLiftActivity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Activity ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Activity name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Activity notes"
+          },
+          "sets": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of sets"
+          },
+          "repetitions": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of repetitions per set"
+          },
+          "percentOfMax": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of max weight"
+          },
+          "activityTemplateId": {
+            "type": "string",
+            "description": "Reference to activity template"
+          },
+          "benchmarkTemplateId": {
+            "type": "string",
+            "description": "Reference to benchmark template"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "sets", "repetitions", "percentOfMax"]
+      },
+      "AccessoryLiftActivity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Activity ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Activity name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Activity notes"
+          },
+          "sets": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of sets"
+          },
+          "repetitions": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of repetitions per set"
+          },
+          "percentOfMax": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of max weight"
+          },
+          "activityTemplateId": {
+            "type": "string",
+            "description": "Reference to activity template"
+          },
+          "benchmarkTemplateId": {
+            "type": "string",
+            "description": "Reference to benchmark template"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name", "sets", "repetitions", "percentOfMax"]
+      },
+      "OtherActivity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Activity ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Activity name"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Activity notes"
+          },
+          "measurementNotes": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Measurement details"
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Numeric value"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Unit of measurement"
+          },
+          "activityTemplateId": {
+            "type": "string",
+            "description": "Reference to activity template"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name"]
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Schedule ID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Schedule name"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Block"
+            },
+            "description": "Array of training blocks"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": ["name"]
+      },
+      "Block": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Block ID"
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Week"
+            },
+            "description": "Array of weeks in the block"
+          },
+          "groupTargetPercentages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupPercentage"
+            },
+            "description": "Target percentages for activity groups"
+          }
+        },
+        "required": ["id", "weeks"]
+      },
+      "Week": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Week ID"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Day"
+            },
+            "description": "Array of days in the week"
+          },
+          "groupTargetPercentages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupPercentage"
+            },
+            "description": "Target percentages for activity groups"
+          }
+        },
+        "required": ["id", "days"]
+      },
+      "Day": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Day ID"
+          },
+          "primaryLiftActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrimaryLiftActivity"
+            },
+            "description": "Array of primary lift activities"
+          },
+          "accessoryLiftActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessoryLiftActivity"
+            },
+            "description": "Array of accessory lift activities"
+          },
+          "otherActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OtherActivity"
+            },
+            "description": "Array of other activities"
+          }
+        },
+        "required": ["id"]
+      },
+      "GroupPercentage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Group percentage ID"
+          },
+          "groupId": {
+            "type": "string",
+            "description": "Reference to activity group"
+          },
+          "percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Target percentage for the group"
+          }
+        },
+        "required": ["id", "groupId", "percentage"]
+      }
+    }
+  }
+} 

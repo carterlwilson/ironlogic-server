@@ -1,0 +1,118 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import session from 'express-session';
+import passport from 'passport';
+import { connectDB } from './config/database';
+import './config/passport'; // Import passport configuration
+
+// Import routes
+import userRoutes from './routes/users';
+import activityGroupRoutes from './routes/activityGroups';
+import primaryLiftActivityRoutes from './routes/primaryLiftActivities';
+import accessoryLiftActivityRoutes from './routes/accessoryLiftActivities';
+import otherActivityRoutes from './routes/otherActivities';
+import benchmarkTemplateRoutes from './routes/benchmarkTemplates';
+import activityTemplateRoutes from './routes/activityTemplates';
+import liftBenchmarkRoutes from './routes/liftBenchmarks';
+import otherBenchmarkRoutes from './routes/otherBenchmarks';
+import scheduleRoutes from './routes/schedules';
+import clientRoutes from './routes/clients';
+import authRoutes from './routes/auth';
+
+// Load environment variables
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || /^https?:\/\/localhost:\d+$/,
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'IronLogic Server is running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    database: 'Connected' // You can enhance this to check actual DB status
+  });
+});
+
+// Public routes (no authentication required)
+app.use('/api/auth', authRoutes);
+
+// Protected API Routes (authentication required)
+app.use('/api/users', userRoutes);
+app.use('/api/activity-groups', activityGroupRoutes);
+app.use('/api/primary-lift-activities', primaryLiftActivityRoutes);
+app.use('/api/accessory-lift-activities', accessoryLiftActivityRoutes);
+app.use('/api/other-activities', otherActivityRoutes);
+app.use('/api/benchmark-templates', benchmarkTemplateRoutes);
+app.use('/api/activity-templates', activityTemplateRoutes);
+app.use('/api/lift-benchmarks', liftBenchmarkRoutes);
+app.use('/api/other-benchmarks', otherBenchmarkRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/clients', clientRoutes);
+
+// Start server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 API Documentation: http://localhost:${PORT}/api/health`);
+      console.log(`🔐 Authentication: http://localhost:${PORT}/api/auth`);
+      console.log(`📋 Available endpoints:`);
+      console.log(`   - Auth: /api/auth`);
+      console.log(`   - Users: /api/users`);
+      console.log(`   - Activity Groups: /api/activity-groups`);
+      console.log(`   - Primary Lift Activities: /api/primary-lift-activities`);
+      console.log(`   - Accessory Lift Activities: /api/accessory-lift-activities`);
+      console.log(`   - Other Activities: /api/other-activities`);
+      console.log(`   - Benchmark Templates: /api/benchmark-templates`);
+      console.log(`   - Activity Templates: /api/activity-templates`);
+      console.log(`   - Lift Benchmarks: /api/lift-benchmarks`);
+      console.log(`   - Other Benchmarks: /api/other-benchmarks`);
+      console.log(`   - Schedules: /api/schedules`);
+      console.log(`   - Clients: /api/clients`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
