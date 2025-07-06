@@ -34,7 +34,7 @@ The `.env` file is already configured with default values for local development:
 ```env
 PORT=3000
 NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/ironlogic
+MONGO_URL=mongodb://localhost:27017/ironlogic
 ```
 
 ### 3. Start MongoDB with Docker
@@ -314,8 +314,8 @@ src/
 
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - Environment (development/production)
-- `MONGODB_URI` - MongoDB connection string
-- `MONGODB_URI_TEST` - Test database connection string
+- `MONGO_URL` - MongoDB connection string
+- `MONGO_URL_TEST` - Test database connection string
 
 ## Docker Commands
 
@@ -346,7 +346,7 @@ If ports 3000, 27017, or 8081 are in use, modify the `docker-compose.yml` file o
 ## Production Deployment
 
 For production deployment:
-1. Update the `MONGODB_URI` in your environment variables
+1. Update the `MONGO_URL` in your environment variables
 2. Set `NODE_ENV=production`
 3. Use `npm run build && npm start` to run the compiled version
 

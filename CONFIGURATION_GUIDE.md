@@ -10,7 +10,7 @@ Create a `.env` file in your project root for local development:
 
 ```env
 # Database Configuration
-MONGODB_URI=mongodb://localhost:27017/ironlogic
+MONGO_URL=mongodb://localhost:27017/ironlogic
 
 # Server Configuration
 PORT=3000
@@ -29,7 +29,7 @@ For Railway, Render, or other cloud platforms, set these environment variables i
 
 ### Required Variables:
 ```env
-MONGODB_URI=mongodb://your-cloud-mongodb-connection-string
+MONGO_URL=mongodb://your-cloud-mongodb-connection-string
 NODE_ENV=production
 SESSION_SECRET=your-production-secret-key-make-it-long-and-random
 ```
@@ -44,7 +44,7 @@ CORS_ORIGIN=https://your-frontend-domain.com
 
 | Variable | Description | Required | Local Default | Production |
 |----------|-------------|----------|---------------|------------|
-| `MONGODB_URI` | Database connection string | Yes | `mongodb://localhost:27017/ironlogic` | Cloud MongoDB URI |
+| `MONGO_URL` | Database connection string | Yes | `mongodb://localhost:27017/ironlogic` | Cloud MongoDB URI |
 | `PORT` | Server port | No | `3000` | Platform assigned |
 | `NODE_ENV` | Environment | No | `development` | `production` |
 | `SESSION_SECRET` | Session encryption key | Yes | `your-secret-key` | Strong random string |
@@ -107,7 +107,7 @@ NODE_ENV=production SESSION_SECRET=test-secret npm start
 
 ### Heroku
 ```bash
-heroku config:set MONGODB_URI=your-mongodb-uri
+heroku config:set MONGO_URL=your-mongodb-uri
 heroku config:set NODE_ENV=production
 heroku config:set SESSION_SECRET=your-secret
 ```
@@ -126,7 +126,7 @@ Your app will automatically:
 ### Common Issues:
 
 1. **Database Connection Fails**
-   - Check `MONGODB_URI` is correct
+   - Check `MONGO_URL` is correct
    - Verify database is running/accessible
    - Check network connectivity
 

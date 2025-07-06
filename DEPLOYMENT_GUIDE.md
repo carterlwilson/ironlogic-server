@@ -23,7 +23,7 @@ Create a `.env` file for local development:
 
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/ironlogic
+MONGO_URL=mongodb://localhost:27017/ironlogic
 
 # Server
 PORT=3000
@@ -74,7 +74,7 @@ Your `package.json` should have these scripts:
 In your Railway project dashboard:
 
 ```env
-MONGODB_URI=mongodb://railway-mongodb-connection-string
+MONGO_URL=mongodb://railway-mongodb-connection-string
 NODE_ENV=production
 SESSION_SECRET=your-production-secret-key
 CORS_ORIGIN=https://your-frontend-domain.com
@@ -109,7 +109,7 @@ Same as Railway preparation.
 In your Render web service dashboard:
 
 ```env
-MONGODB_URI=mongodb://render-mongodb-connection-string
+MONGO_URL=mongodb://render-mongodb-connection-string
 NODE_ENV=production
 SESSION_SECRET=your-production-secret-key
 CORS_ORIGIN=https://your-frontend-domain.com
@@ -123,7 +123,7 @@ CORS_ORIGIN=https://your-frontend-domain.com
 
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
-| `MONGODB_URI` | MongoDB connection string | Yes | `mongodb://localhost:27017/ironlogic` |
+| `MONGO_URL` | MongoDB connection string | Yes | `mongodb://localhost:27017/ironlogic` |
 | `PORT` | Server port | No (default: 3000) | `3000` |
 | `NODE_ENV` | Environment | No (default: development) | `production` |
 | `SESSION_SECRET` | Session encryption key | Yes | `your-secret-key` |
@@ -194,7 +194,7 @@ curl https://your-app.railway.app/api/programs
    - Check for missing dependencies
 
 2. **Database Connection Issues**
-   - Verify `MONGODB_URI` is correct
+   - Verify `MONGO_URL` is correct
    - Check if database service is running
    - Ensure network access is allowed
 

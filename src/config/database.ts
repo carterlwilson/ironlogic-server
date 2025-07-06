@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ironlogic';
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/ironlogic';
 
 export const connectDB = async (): Promise<void> => {
   try {
-    const conn = await mongoose.connect(MONGODB_URI);
+    const conn = await mongoose.connect(MONGO_URL);
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     

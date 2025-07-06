@@ -67,7 +67,7 @@ const User = mongoose.model('User', userSchema);
 async function createAdminUser() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ironlogic');
+    await mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost:27017/ironlogic');
     console.log('Connected to MongoDB');
 
     // Check if admin user already exists
