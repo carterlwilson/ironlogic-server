@@ -9,6 +9,6 @@ export interface IClient extends Document {
   userId: string;
   liftBenchmarks: ILiftBenchmark[];
   otherBenchmarks: IOtherBenchmark[];
-  scheduleId: string;
+  programId: string;
   weight: number;
 } 

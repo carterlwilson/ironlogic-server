@@ -1,21 +1,21 @@
 import express, { RequestHandler } from 'express';
-import { Schedule } from '../mongooseSchemas/Schedule';
-import { ISchedule } from '../models/Schedule';
+import { Program } from '../mongooseSchemas/Program';
+import { IProgram } from '../models/Program';
 
 const router = express.Router();
 
-// GET all schedules
-const getAllSchedules: RequestHandler = async (req, res): Promise<void> => {
+// GET all programs
+const getAllPrograms: RequestHandler = async (req, res): Promise<void> => {
   try {
-    const schedules = await Schedule.find().select('-__v');
+    const programs = await Program.find().select('-__v');
     
     res.json({
       success: true,
-      count: schedules.length,
-      data: schedules
+      count: programs.length,
+      data: programs
     });
   } catch (error) {
-    console.error('Error fetching schedules:', error);
+    console.error('Error fetching programs:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -23,25 +23,25 @@ const getAllSchedules: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-// GET single schedule by ID
-const getScheduleById: RequestHandler = async (req, res): Promise<void> => {
+// GET single program by ID
+const getProgramById: RequestHandler = async (req, res): Promise<void> => {
   try {
-    const schedule = await Schedule.findById(req.params.id).select('-__v');
+    const program = await Program.findById(req.params.id).select('-__v');
     
-    if (!schedule) {
+    if (!program) {
       res.status(404).json({
         success: false,
-        message: 'Schedule not found'
+        message: 'Program not found'
       });
       return;
     }
     
     res.json({
       success: true,
-      data: schedule
+      data: program
     });
   } catch (error) {
-    console.error('Error fetching schedule:', error);
+    console.error('Error fetching program:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -49,22 +49,22 @@ const getScheduleById: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-// POST create new schedule
-const createSchedule: RequestHandler = async (req, res): Promise<void> => {
+// POST create new program
+const createProgram: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { name, blocks } = req.body;
     
-    const schedule = await Schedule.create({
+    const program = await Program.create({
       name,
       blocks: blocks || []
     });
     
     res.status(201).json({
       success: true,
-      data: schedule
+      data: program
     });
   } catch (error) {
-    console.error('Error creating schedule:', error);
+    console.error('Error creating program:', error);
     
     // Handle validation errors
     if (error instanceof Error && error.name === 'ValidationError') {
@@ -83,31 +83,31 @@ const createSchedule: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-// PUT update schedule
-const updateSchedule: RequestHandler = async (req, res): Promise<void> => {
+// PUT update program
+const updateProgram: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { name, blocks } = req.body;
     
-    const schedule = await Schedule.findByIdAndUpdate(
+    const program = await Program.findByIdAndUpdate(
       req.params.id,
       { name, blocks },
       { new: true, runValidators: true }
     ).select('-__v');
     
-    if (!schedule) {
+    if (!program) {
       res.status(404).json({
         success: false,
-        message: 'Schedule not found'
+        message: 'Program not found'
       });
       return;
     }
     
     res.json({
       success: true,
-      data: schedule
+      data: program
     });
   } catch (error) {
-    console.error('Error updating schedule:', error);
+    console.error('Error updating program:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -115,29 +115,29 @@ const updateSchedule: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-// PATCH partial update schedule
-const patchSchedule: RequestHandler = async (req, res): Promise<void> => {
+// PATCH partial update program
+const patchProgram: RequestHandler = async (req, res): Promise<void> => {
   try {
-    const schedule = await Schedule.findByIdAndUpdate(
+    const program = await Program.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).select('-__v');
     
-    if (!schedule) {
+    if (!program) {
       res.status(404).json({
         success: false,
-        message: 'Schedule not found'
+        message: 'Program not found'
       });
       return;
     }
     
     res.json({
       success: true,
-      data: schedule
+      data: program
     });
   } catch (error) {
-    console.error('Error patching schedule:', error);
+    console.error('Error patching program:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -145,25 +145,25 @@ const patchSchedule: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-// DELETE schedule
-const deleteSchedule: RequestHandler = async (req, res): Promise<void> => {
+// DELETE program
+const deleteProgram: RequestHandler = async (req, res): Promise<void> => {
   try {
-    const schedule = await Schedule.findByIdAndDelete(req.params.id);
+    const program = await Program.findByIdAndDelete(req.params.id);
     
-    if (!schedule) {
+    if (!program) {
       res.status(404).json({
         success: false,
-        message: 'Schedule not found'
+        message: 'Program not found'
       });
       return;
     }
     
     res.json({
       success: true,
-      message: 'Schedule deleted successfully'
+      message: 'Program deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting schedule:', error);
+    console.error('Error deleting program:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -172,11 +172,11 @@ const deleteSchedule: RequestHandler = async (req, res): Promise<void> => {
 };
 
 // Route definitions
-router.get('/', getAllSchedules);
-router.get('/:id', getScheduleById);
-router.post('/', createSchedule);
-router.put('/:id', updateSchedule);
-router.patch('/:id', patchSchedule);
-router.delete('/:id', deleteSchedule);
+router.get('/', getAllPrograms);
+router.get('/:id', getProgramById);
+router.post('/', createProgram);
+router.put('/:id', updateProgram);
+router.patch('/:id', patchProgram);
+router.delete('/:id', deleteProgram);
 
 export default router; 

@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { ISchedule } from '../models/Schedule';
+import { IProgram } from '../models/Program';
 
-// Embedded block schema (simplified for schedule context)
+// Embedded block schema (simplified for program context)
 const blockSubSchema = new Schema({
   id: {
     type: String,
@@ -53,7 +53,7 @@ const blockSubSchema = new Schema({
   }]
 }, { _id: false });
 
-const scheduleSchema = new Schema<ISchedule>({
+const programSchema = new Schema<IProgram>({
   name: {
     type: String,
     required: [true, 'Name is required'],
@@ -239,6 +239,6 @@ const scheduleSchema = new Schema<ISchedule>({
 });
 
 // Index for better query performance
-scheduleSchema.index({ name: 1 });
+programSchema.index({ name: 1 });
 
-export const Schedule = mongoose.model<ISchedule>('Schedule', scheduleSchema); 
+export const Program = mongoose.model<IProgram>('Program', programSchema); 

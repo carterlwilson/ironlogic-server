@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "IronLogic Fitness Training API",
-    "description": "API for managing fitness training data including clients, activities, schedules, and benchmarks",
+    "description": "API for managing fitness training data including clients, activities, programs, and benchmarks",
     "version": "1.0.0",
     "contact": {
       "name": "IronLogic API Support"
@@ -40,8 +40,8 @@
       "description": "Activity groups, templates, and activities"
     },
     {
-      "name": "Schedules",
-      "description": "Schedules and training blocks"
+      "name": "Programs",
+      "description": "Programs and training blocks"
     }
   ],
   "paths": {

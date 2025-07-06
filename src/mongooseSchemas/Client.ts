@@ -102,7 +102,7 @@ const clientSchema = new Schema<IClient>({
   },
   liftBenchmarks: [liftBenchmarkSubSchema],
   otherBenchmarks: [otherBenchmarkSubSchema],
-  scheduleId: {
+  programId: {
     type: String,
     trim: true
   },
@@ -130,7 +130,7 @@ const clientSchema = new Schema<IClient>({
 
 // Indexes for better query performance
 clientSchema.index({ email: 1 });
-clientSchema.index({ scheduleId: 1 });
+clientSchema.index({ programId: 1 });
 
 // Virtual for full name
 clientSchema.virtual('fullName').get(function() {

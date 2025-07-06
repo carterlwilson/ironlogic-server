@@ -139,12 +139,12 @@ The server will be available at `http://localhost:3000`
 - `PUT /api/other-benchmarks/:id` - Update other benchmark
 - `DELETE /api/other-benchmarks/:id` - Delete other benchmark
 
-### Schedules
-- `GET /api/schedules` - Get all schedules
-- `GET /api/schedules/:id` - Get schedule by ID
-- `POST /api/schedules` - Create new schedule
-- `PUT /api/schedules/:id` - Update schedule
-- `DELETE /api/schedules/:id` - Delete schedule
+### Programs
+- `GET /api/programs` - Get all programs
+- `GET /api/programs/:id` - Get program by ID
+- `POST /api/programs` - Create new program
+- `PUT /api/programs/:id` - Update program
+- `DELETE /api/programs/:id` - Delete program
 
 ### Clients
 - `GET /api/clients` - Get all clients
@@ -190,8 +190,8 @@ The server will be available at `http://localhost:3000`
 - `name` (string, required) - Name of the activity template
 - `activityGroupId` (string, required) - Reference to activity group
 
-### Schedules
-- `name` (string, required) - Name of the schedule
+### Programs
+- `name` (string, required) - Name of the program
 - `blocks` (array of ObjectIds) - References to blocks
 
 ### Clients
@@ -199,7 +199,7 @@ The server will be available at `http://localhost:3000`
 - `firstName` (string, required) - First name
 - `lastName` (string, required) - Last name
 - `benchmarks` (array of ObjectIds) - References to benchmarks
-- `scheduleId` (ObjectId, required) - Reference to schedule
+- `programId` (ObjectId, required) - Reference to program
 - `weight` (number, required) - Client weight
 
 ## Example API Usage
@@ -236,7 +236,7 @@ curl -X POST http://localhost:3000/api/clients \
     "email": "john@example.com",
     "firstName": "John",
     "lastName": "Doe",
-    "scheduleId": "SCHEDULE_ID_HERE",
+    "programId": "PROGRAM_ID_HERE",
     "weight": 180
   }'
 ```
@@ -278,7 +278,7 @@ src/
 │   ├── Benchmark.ts             # Base benchmark model
 │   ├── BenchmarkTemplate.ts     # Benchmark template model
 │   ├── Client.ts                # Client model
-│   ├── Schedule.ts              # Schedule model
+│   ├── Program.ts               # Program model
 │   ├── Block.ts                 # Block model
 │   ├── Week.ts                  # Week model
 │   ├── Day.ts                   # Day model
@@ -291,7 +291,7 @@ src/
 │   ├── accessoryLiftActivities.ts # Accessory lift activity routes
 │   ├── otherActivities.ts       # Other activity routes
 │   ├── benchmarkTemplates.ts    # Benchmark template routes
-│   ├── schedules.ts             # Schedule routes
+│   ├── programs.ts              # Program routes
 │   └── clients.ts               # Client routes
 └── server.ts                    # Main server file
 ```

@@ -75,10 +75,34 @@ const getClientByEmail: RequestHandler = async (req, res) => {
   }
 };
 
+// GET client names (id and name only)
+const getClientNames: RequestHandler = async (req, res) => {
+  try {
+    const clients = await Client.find().select('id firstName lastName').sort({ firstName: 1, lastName: 1 });
+    
+    const clientNames = clients.map(client => ({
+      id: client.id,
+      name: `${client.firstName} ${client.lastName}`.trim()
+    }));
+    
+    res.json({
+      success: true,
+      count: clientNames.length,
+      data: clientNames
+    });
+  } catch (error) {
+    console.error('Error fetching client names:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 // POST create new client
 const createClient: RequestHandler = async (req, res) => {
   try {
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, scheduleId, weight } = req.body;
+    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight } = req.body;
     
     const client = await Client.create({
       email,
@@ -87,7 +111,7 @@ const createClient: RequestHandler = async (req, res) => {
       userId,
       liftBenchmarks: liftBenchmarks || [],
       otherBenchmarks: otherBenchmarks || [],
-      scheduleId,
+      programId,
       weight
     });
     
@@ -118,11 +142,11 @@ const createClient: RequestHandler = async (req, res) => {
 // PUT update client
 const updateClient: RequestHandler = async (req, res) => {
   try {
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, scheduleId, weight } = req.body;
+    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight } = req.body;
     
     const client = await Client.findByIdAndUpdate(
       req.params.id,
-      { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, scheduleId, weight },
+      { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight },
       { new: true, runValidators: true }
     ).select('-__v');
     
@@ -205,6 +229,7 @@ const deleteClient: RequestHandler = async (req, res) => {
 
 // Route definitions
 router.get('/', getAllClients);
+router.get('/names', getClientNames);
 router.get('/email/:email', getClientByEmail);
 router.get('/:id', getClientById);
 router.post('/', createClient);

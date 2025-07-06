@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "IronLogic Fitness Training API",
-    "description": "API for managing fitness training data including clients, activities, schedules, and benchmarks",
+    "description": "API for managing fitness training data including clients, activities, programs, and benchmarks",
     "version": "1.0.0",
     "contact": {
       "name": "IronLogic API Support"
@@ -363,7 +363,7 @@
                       "$ref": "#/components/schemas/Benchmark"
                     }
                   },
-                  "scheduleId": {
+                  "programId": {
                     "type": "string"
                   }
                 }
@@ -374,7 +374,7 @@
                 "lastName": "Smith",
                 "weight": 65,
                 "benchmarks": [],
-                "scheduleId": ""
+                "programId": ""
               }
             }
           }
@@ -485,7 +485,7 @@
                       "$ref": "#/components/schemas/Benchmark"
                     }
                   },
-                  "scheduleId": {
+                  "programId": {
                     "type": "string"
                   }
                 }
@@ -540,7 +540,7 @@
                       "$ref": "#/components/schemas/Benchmark"
                     }
                   },
-                  "scheduleId": {
+                  "programId": {
                     "type": "string"
                   }
                 }
@@ -1997,19 +1997,19 @@
         }
       }
     },
-    "/api/schedules": {
+    "/api/programs": {
       "get": {
-        "tags": ["Schedules"],
-        "summary": "Get all schedules",
+        "tags": ["Programs"],
+        "summary": "Get all programs",
         "responses": {
           "200": {
-            "description": "List of schedules",
+            "description": "List of programs",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Schedule"
+                    "$ref": "#/components/schemas/Program"
                   }
                 }
               }
@@ -2018,25 +2018,25 @@
         }
       },
       "post": {
-        "tags": ["Schedules"],
-        "summary": "Create a new schedule",
+        "tags": ["Programs"],
+        "summary": "Create a new program",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schedule"
+                "$ref": "#/components/schemas/Program"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Schedule created successfully",
+            "description": "Program created successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schedule"
+                  "$ref": "#/components/schemas/Program"
                 }
               }
             }
@@ -2044,10 +2044,10 @@
         }
       }
     },
-    "/api/schedules/{id}": {
+    "/api/programs/{id}": {
       "get": {
-        "tags": ["Schedules"],
-        "summary": "Get a schedule by ID",
+        "tags": ["Programs"],
+        "summary": "Get a program by ID",
         "parameters": [
           {
             "name": "id",
@@ -2056,28 +2056,28 @@
             "schema": {
               "type": "string"
             },
-            "description": "Schedule ID"
+            "description": "Program ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "Schedule found",
+            "description": "Program found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schedule"
+                  "$ref": "#/components/schemas/Program"
                 }
               }
             }
           },
           "404": {
-            "description": "Schedule not found"
+            "description": "Program not found"
           }
         }
       },
       "put": {
-        "tags": ["Schedules"],
-        "summary": "Update a schedule",
+        "tags": ["Programs"],
+        "summary": "Update a program",
         "parameters": [
           {
             "name": "id",
@@ -2086,7 +2086,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Schedule ID"
+            "description": "Program ID"
           }
         ],
         "requestBody": {
@@ -2094,30 +2094,30 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schedule"
+                "$ref": "#/components/schemas/Program"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Schedule updated successfully",
+            "description": "Program updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schedule"
+                  "$ref": "#/components/schemas/Program"
                 }
               }
             }
           },
           "404": {
-            "description": "Schedule not found"
+            "description": "Program not found"
           }
         }
       },
       "delete": {
-        "tags": ["Schedules"],
-        "summary": "Delete a schedule",
+        "tags": ["Programs"],
+        "summary": "Delete a program",
         "parameters": [
           {
             "name": "id",
@@ -2126,15 +2126,15 @@
             "schema": {
               "type": "string"
             },
-            "description": "Schedule ID"
+            "description": "Program ID"
           }
         ],
         "responses": {
           "200": {
-            "description": "Schedule deleted successfully"
+            "description": "Program deleted successfully"
           },
           "404": {
-            "description": "Schedule not found"
+            "description": "Program not found"
           }
         }
       }
@@ -2174,7 +2174,7 @@
               "$ref": "#/components/schemas/OtherBenchmark"
             }
           },
-          "scheduleId": { "type": "string" },
+          "programId": { "type": "string" },
           "weight": { "type": "number" },
           "fullName": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
@@ -2338,7 +2338,7 @@
         },
         "required": ["id", "name", "benchmarkType"]
       },
-      "Schedule": {
+      "Program": {
         "type": "object",
         "properties": {
           "id": { "type": "string" },

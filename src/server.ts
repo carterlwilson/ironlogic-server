@@ -16,8 +16,9 @@ import benchmarkTemplateRoutes from './routes/benchmarkTemplates';
 import activityTemplateRoutes from './routes/activityTemplates';
 import liftBenchmarkRoutes from './routes/liftBenchmarks';
 import otherBenchmarkRoutes from './routes/otherBenchmarks';
-import scheduleRoutes from './routes/schedules';
+import programRoutes from './routes/programs';
 import clientRoutes from './routes/clients';
+import weeklyScheduleRoutes from './routes/weeklySchedules';
 import authRoutes from './routes/auth';
 
 // Load environment variables
@@ -80,8 +81,9 @@ app.use('/api/benchmark-templates', benchmarkTemplateRoutes);
 app.use('/api/activity-templates', activityTemplateRoutes);
 app.use('/api/lift-benchmarks', liftBenchmarkRoutes);
 app.use('/api/other-benchmarks', otherBenchmarkRoutes);
-app.use('/api/schedules', scheduleRoutes);
+app.use('/api/programs', programRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/weekly-schedules', weeklyScheduleRoutes);
 
 // Start server
 const startServer = async () => {
@@ -106,8 +108,9 @@ const startServer = async () => {
       console.log(`   - Activity Templates: /api/activity-templates`);
       console.log(`   - Lift Benchmarks: /api/lift-benchmarks`);
       console.log(`   - Other Benchmarks: /api/other-benchmarks`);
-      console.log(`   - Schedules: /api/schedules`);
+      console.log(`   - Programs: /api/programs`);
       console.log(`   - Clients: /api/clients`);
+      console.log(`   - Weekly Schedules: /api/weekly-schedules`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

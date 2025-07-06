@@ -496,33 +496,33 @@
       "_type": "request"
     },
     {
-      "_id": "fld_schedules",
+      "_id": "fld_programs",
       "parentId": "wrk_ironlogic",
-      "name": "Schedules",
+      "name": "Programs",
       "_type": "request_group"
     },
     {
-      "_id": "req_schedules_get_all",
-      "parentId": "fld_schedules",
-      "name": "Get All Schedules",
+      "_id": "req_programs_get_all",
+      "parentId": "fld_programs",
+      "name": "Get All Programs",
       "method": "GET",
-      "url": "{{ base_url }}/schedules",
+      "url": "{{ base_url }}/programs",
       "_type": "request"
     },
     {
-      "_id": "req_schedules_get_by_id",
-      "parentId": "fld_schedules",
-      "name": "Get Schedule by ID",
+      "_id": "req_programs_get_by_id",
+      "parentId": "fld_programs",
+      "name": "Get Program by ID",
       "method": "GET",
-      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "url": "{{ base_url }}/programs/{programId}",
       "_type": "request"
     },
     {
-      "_id": "req_schedules_create",
-      "parentId": "fld_schedules",
-      "name": "Create Schedule",
+      "_id": "req_programs_create",
+      "parentId": "fld_programs",
+      "name": "Create Program",
       "method": "POST",
-      "url": "{{ base_url }}/schedules",
+      "url": "{{ base_url }}/programs",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"name\": \"Summer Strength\",\n  \"blocks\": []\n}"
@@ -530,11 +530,11 @@
       "_type": "request"
     },
     {
-      "_id": "req_schedules_update",
-      "parentId": "fld_schedules",
-      "name": "Update Schedule",
+      "_id": "req_programs_update",
+      "parentId": "fld_programs",
+      "name": "Update Program",
       "method": "PUT",
-      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "url": "{{ base_url }}/programs/{programId}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"name\": \"Summer Strength Updated\",\n  \"blocks\": []\n}"
@@ -542,11 +542,11 @@
       "_type": "request"
     },
     {
-      "_id": "req_schedules_patch",
-      "parentId": "fld_schedules",
-      "name": "Patch Schedule",
+      "_id": "req_programs_patch",
+      "parentId": "fld_programs",
+      "name": "Patch Program",
       "method": "PATCH",
-      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "url": "{{ base_url }}/programs/{programId}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"name\": \"Patched Name\"\n}"
@@ -554,11 +554,11 @@
       "_type": "request"
     },
     {
-      "_id": "req_schedules_delete",
-      "parentId": "fld_schedules",
-      "name": "Delete Schedule",
+      "_id": "req_programs_delete",
+      "parentId": "fld_programs",
+      "name": "Delete Program",
       "method": "DELETE",
-      "url": "{{ base_url }}/schedules/{scheduleId}",
+      "url": "{{ base_url }}/programs/{programId}",
       "_type": "request"
     }
   ]
