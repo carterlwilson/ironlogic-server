@@ -6,6 +6,7 @@
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "postinstall": "npm run build",
     "create-admin": "node scripts/createAdmin.js"
   },
   "keywords": [],

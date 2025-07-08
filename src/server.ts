@@ -5,6 +5,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { connectDB } from './config/database';
 import './config/passport'; // Import passport configuration
+import mongoose from 'mongoose';
 
 // Import routes
 import userRoutes from './routes/users';
@@ -61,10 +62,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    database: 'Connected' // You can enhance this to check actual DB status
+    database: dbStatus,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 

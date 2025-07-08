@@ -10,7 +10,7 @@ Create a `.env` file in your project root for local development:
 
 ```env
 # Database Configuration
-MONGO_URL=mongodb://localhost:27017/ironlogic
+MONGODB_URL=mongodb://localhost:27017/ironlogic
 
 # Server Configuration
 PORT=3000
@@ -44,7 +44,7 @@ CORS_ORIGIN=https://your-frontend-domain.com
 
 | Variable | Description | Required | Local Default | Production |
 |----------|-------------|----------|---------------|------------|
-| `MONGO_URL` | Database connection string | Yes | `mongodb://localhost:27017/ironlogic` | Cloud MongoDB URI |
+| `MONGODB_URL` | Database connection string | Yes | `mongodb://localhost:27017/ironlogic` | Cloud MongoDB URI |
 | `PORT` | Server port | No | `3000` | Platform assigned |
 | `NODE_ENV` | Environment | No | `development` | `production` |
 | `SESSION_SECRET` | Session encryption key | Yes | `your-secret-key` | Strong random string |
