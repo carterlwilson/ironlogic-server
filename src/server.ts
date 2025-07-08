@@ -29,11 +29,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || /^https?:\/\/localhost:\d+$/,
-  credentials: true
-}));
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
+// CORS configuration
+console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
