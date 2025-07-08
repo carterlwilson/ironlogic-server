@@ -38,24 +38,34 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration with debugging
-console.log('MongoDB URL for sessions:', process.env.MONGODB_URL || process.env.MONGODB_URI);
+console.log('MongoDB URL for sessions:', process.env.MONGODB_URL);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
+// Create session store immediately
+console.log('Creating MongoDB session store...');
 const sessionStore = MongoStore.create({
-  mongoUrl: process.env.MONGODB_URL || process.env.MONGODB_URI,
+  mongoUrl: process.env.MONGODB_URL,
   collectionName: 'sessions',
   ttl: 24 * 60 * 60 // 24 hours in seconds
 });
+
+console.log('Session store created, setting up event listeners...');
 
 // Add store event listeners for debugging
 sessionStore.on('connected', () => {
   console.log('✅ MongoDB session store connected');
 });
 
-sessionStore.on('error', (error) => {
+sessionStore.on('error', (error: any) => {
   console.error('❌ MongoDB session store error:', error);
 });
 
+// Check if already connected
+if ((sessionStore as any).client && (sessionStore as any).client.topology && (sessionStore as any).client.topology.isConnected()) {
+  console.log('✅ MongoDB session store already connected');
+}
+
+// Session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
@@ -69,18 +79,21 @@ app.use(session({
   }
 }));
 
-// Add session debugging middleware
-app.use((req, res, next) => {
+// Add session debugging middleware (after Passport initialization)
+const sessionDebugMiddleware = (req: any, res: any, next: any) => {
   console.log('Session ID:', req.sessionID);
-  console.log('User authenticated:', req.isAuthenticated());
+  console.log('User authenticated:', req.isAuthenticated ? req.isAuthenticated() : 'Passport not initialized');
   console.log('User data:', req.user);
   console.log('Session store:', req.sessionStore ? 'Connected' : 'Not connected');
   next();
-});
+};
 
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Add session debugging middleware after Passport is initialized
+app.use(sessionDebugMiddleware);
 
 // Routes
 app.get('/', (req, res) => {
