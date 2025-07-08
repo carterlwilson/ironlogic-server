@@ -81,10 +81,13 @@ app.use(session({
 
 // Add session debugging middleware (after Passport initialization)
 const sessionDebugMiddleware = (req: any, res: any, next: any) => {
+  console.log('=== SESSION DEBUG ===');
   console.log('Session ID:', req.sessionID);
   console.log('User authenticated:', req.isAuthenticated ? req.isAuthenticated() : 'Passport not initialized');
   console.log('User data:', req.user);
   console.log('Session store:', req.sessionStore ? 'Connected' : 'Not connected');
+  console.log('Cookies:', req.headers.cookie);
+  console.log('====================');
   next();
 };
 
