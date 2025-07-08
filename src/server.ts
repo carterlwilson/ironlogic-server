@@ -6,6 +6,7 @@ import passport from 'passport';
 import { connectDB } from './config/database';
 import './config/passport'; // Import passport configuration
 import mongoose from 'mongoose';
+import MongoStore from 'connect-mongo';
 
 // Import routes
 import userRoutes from './routes/users';
@@ -41,10 +42,16 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URL || process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60 // 24 hours in seconds
+  }),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
 
