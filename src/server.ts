@@ -37,16 +37,30 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
+// Session configuration with debugging
+console.log('MongoDB URL for sessions:', process.env.MONGODB_URL || process.env.MONGODB_URI);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGODB_URL || process.env.MONGODB_URI,
+  collectionName: 'sessions',
+  ttl: 24 * 60 * 60 // 24 hours in seconds
+});
+
+// Add store event listeners for debugging
+sessionStore.on('connected', () => {
+  console.log('✅ MongoDB session store connected');
+});
+
+sessionStore.on('error', (error) => {
+  console.error('❌ MongoDB session store error:', error);
+});
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URL || process.env.MONGODB_URI,
-    collectionName: 'sessions',
-    ttl: 24 * 60 * 60 // 24 hours in seconds
-  }),
+  store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
@@ -54,6 +68,15 @@ app.use(session({
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
+
+// Add session debugging middleware
+app.use((req, res, next) => {
+  console.log('Session ID:', req.sessionID);
+  console.log('User authenticated:', req.isAuthenticated());
+  console.log('User data:', req.user);
+  console.log('Session store:', req.sessionStore ? 'Connected' : 'Not connected');
+  next();
+});
 
 // Initialize Passport
 app.use(passport.initialize());
