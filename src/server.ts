@@ -35,14 +35,37 @@ app.set('trust proxy', 1);
 // CORS configuration
 console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com',
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    console.log('CORS check - Origin:', origin);
+    const allowedOrigin = process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com';
+    console.log('CORS - Allowed origin:', allowedOrigin);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      console.log('CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
+    
+    if (origin === allowedOrigin) {
+      console.log('CORS: Origin allowed');
+      callback(null, true);
+    } else {
+      console.log('CORS: Origin blocked');
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie']
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
