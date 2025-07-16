@@ -110,6 +110,24 @@ const clientSchema = new Schema<IClient>({
     type: Number,
     required: [true, 'Weight is required'],
     min: [0, 'Weight must be non-negative']
+  },
+  
+  // New required field
+  gymId: {
+    type: String,
+    required: [true, 'Gym ID is required'],
+    trim: true
+  },
+  
+  // Enhanced fields
+  membershipStatus: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
+  },
+  joinedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true,
@@ -129,7 +147,9 @@ const clientSchema = new Schema<IClient>({
 });
 
 // Indexes for better query performance
-clientSchema.index({ email: 1 });
+clientSchema.index({ gymId: 1, email: 1 });
+clientSchema.index({ gymId: 1, userId: 1 });
+clientSchema.index({ gymId: 1, membershipStatus: 1 });
 clientSchema.index({ programId: 1 });
 
 // Virtual for full name

@@ -1,18 +1,24 @@
 import express, { RequestHandler } from 'express';
 import { Client } from '../mongooseSchemas/Client';
 import { IClient } from '../models/Client';
+import { addGymContext, requireGymAccess, requireGymOwner } from '../middleware/auth';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-// GET all clients
+// GET all clients for a gym
 const getAllClients: RequestHandler = async (req, res) => {
   try {
-    const clients = await Client.find().select('-__v');
+    const gymId = req.params.gymId;
+    const clients = await Client.find({ gymId }).select('-__v');
     
     res.json({
       success: true,
       count: clients.length,
-      data: clients
+      data: clients,
+      meta: {
+        userRole: req.gymContext?.userRole,
+        gymId: gymId
+      }
     });
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -26,7 +32,11 @@ const getAllClients: RequestHandler = async (req, res) => {
 // GET single client by ID
 const getClientById: RequestHandler = async (req, res) => {
   try {
-    const client = await Client.findById(req.params.id).select('-__v');
+    const gymId = req.params.gymId;
+    const client = await Client.findOne({ 
+      _id: req.params.id, 
+      gymId 
+    }).select('-__v');
     
     if (!client) {
       res.status(404).json({
@@ -52,7 +62,11 @@ const getClientById: RequestHandler = async (req, res) => {
 // GET client by email
 const getClientByEmail: RequestHandler = async (req, res) => {
   try {
-    const client = await Client.findOne({ email: req.params.email }).select('-__v');
+    const gymId = req.params.gymId;
+    const client = await Client.findOne({ 
+      email: req.params.email, 
+      gymId 
+    }).select('-__v');
     
     if (!client) {
       res.status(404).json({
@@ -78,7 +92,8 @@ const getClientByEmail: RequestHandler = async (req, res) => {
 // GET client names (id and name only)
 const getClientNames: RequestHandler = async (req, res) => {
   try {
-    const clients = await Client.find().select('id firstName lastName').sort({ firstName: 1, lastName: 1 });
+    const gymId = req.params.gymId;
+    const clients = await Client.find({ gymId }).select('id firstName lastName').sort({ firstName: 1, lastName: 1 });
     
     const clientNames = clients.map(client => ({
       id: client.id,
@@ -102,17 +117,30 @@ const getClientNames: RequestHandler = async (req, res) => {
 // POST create new client
 const createClient: RequestHandler = async (req, res) => {
   try {
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight } = req.body;
+    const gymId = req.params.gymId;
+    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus } = req.body;
+    
+    // Check if client with this email already exists in this gym
+    const existingClient = await Client.findOne({ email: email.toLowerCase(), gymId });
+    if (existingClient) {
+      res.status(400).json({
+        success: false,
+        message: 'Client with this email already exists in this gym'
+      });
+      return;
+    }
     
     const client = await Client.create({
       email,
       firstName,
       lastName,
       userId,
+      gymId,
       liftBenchmarks: liftBenchmarks || [],
       otherBenchmarks: otherBenchmarks || [],
       programId,
-      weight
+      weight,
+      membershipStatus: membershipStatus || 'active'
     });
     
     res.status(201).json({
@@ -142,11 +170,12 @@ const createClient: RequestHandler = async (req, res) => {
 // PUT update client
 const updateClient: RequestHandler = async (req, res) => {
   try {
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight } = req.body;
+    const gymId = req.params.gymId;
+    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus } = req.body;
     
-    const client = await Client.findByIdAndUpdate(
-      req.params.id,
-      { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight },
+    const client = await Client.findOneAndUpdate(
+      { _id: req.params.id, gymId },
+      { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus },
       { new: true, runValidators: true }
     ).select('-__v');
     
@@ -174,8 +203,9 @@ const updateClient: RequestHandler = async (req, res) => {
 // PATCH partial update client
 const patchClient: RequestHandler = async (req, res) => {
   try {
-    const client = await Client.findByIdAndUpdate(
-      req.params.id,
+    const gymId = req.params.gymId;
+    const client = await Client.findOneAndUpdate(
+      { _id: req.params.id, gymId },
       req.body,
       { new: true, runValidators: true }
     ).select('-__v');
@@ -204,7 +234,11 @@ const patchClient: RequestHandler = async (req, res) => {
 // DELETE client
 const deleteClient: RequestHandler = async (req, res) => {
   try {
-    const client = await Client.findByIdAndDelete(req.params.id);
+    const gymId = req.params.gymId;
+    const client = await Client.findOneAndDelete({ 
+      _id: req.params.id, 
+      gymId 
+    });
     
     if (!client) {
       res.status(404).json({
@@ -227,14 +261,14 @@ const deleteClient: RequestHandler = async (req, res) => {
   }
 };
 
-// Route definitions
-router.get('/', getAllClients);
-router.get('/names', getClientNames);
-router.get('/email/:email', getClientByEmail);
-router.get('/:id', getClientById);
-router.post('/', createClient);
-router.put('/:id', updateClient);
-router.patch('/:id', patchClient);
-router.delete('/:id', deleteClient);
+// Route definitions (all routes are gym-scoped via :gymId parameter)
+router.get('/', addGymContext as any, requireGymAccess as any, getAllClients);
+router.get('/names', addGymContext as any, requireGymAccess as any, getClientNames);
+router.get('/email/:email', addGymContext as any, requireGymAccess as any, getClientByEmail);
+router.get('/:id', addGymContext as any, requireGymAccess as any, getClientById);
+router.post('/', addGymContext as any, requireGymOwner as any, createClient);
+router.put('/:id', addGymContext as any, requireGymOwner as any, updateClient);
+router.patch('/:id', addGymContext as any, requireGymOwner as any, patchClient);
+router.delete('/:id', addGymContext as any, requireGymOwner as any, deleteClient);
 
 export default router; 

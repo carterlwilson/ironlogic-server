@@ -24,7 +24,7 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ['admin', 'trainer', 'user'],
+    enum: ['admin', 'user'],
     default: 'user'
   },
   isActive: {
@@ -33,6 +33,10 @@ const userSchema = new Schema<IUser>({
   },
   lastLogin: {
     type: Date
+  },
+  currentGymId: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true,

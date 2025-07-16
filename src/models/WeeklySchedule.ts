@@ -4,8 +4,10 @@ export interface ITimeSlot {
   startTime: string; // "09:00", "18:30", etc.
   endTime: string; // "10:00", "19:30", etc.
   maxCapacity: number;
-  clientIds: mongoose.Types.ObjectId[];
+  clientIds: string[];
+  trainerIds?: string[]; // Optional trainer assignments
   notes?: string;
+  activityType?: string; // Type of class/session
 }
 
 export interface IWeeklyScheduleDay {
@@ -16,8 +18,12 @@ export interface IWeeklyScheduleDay {
 export interface IWeeklySchedule extends Document {
   name: string;
   description?: string;
+  
+  // Modified fields
+  locationId: string; // Instead of being global
+  gymId: string; // For easy gym-level queries
+  
   days: IWeeklyScheduleDay[];
-  isBaseline: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,10 +45,18 @@ const timeSlotSchema = new Schema<ITimeSlot>({
     min: 1
   },
   clientIds: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Client'
+    type: String,
+    trim: true
+  }],
+  trainerIds: [{
+    type: String,
+    trim: true
   }],
   notes: {
+    type: String,
+    trim: true
+  },
+  activityType: {
     type: String,
     trim: true
   }
@@ -68,11 +82,20 @@ const weeklyScheduleSchema = new Schema<IWeeklySchedule>({
     type: String,
     trim: true
   },
-  days: [daySchema],
-  isBaseline: {
-    type: Boolean,
-    default: false
-  }
+  
+  // Modified fields
+  locationId: {
+    type: String,
+    required: [true, 'Location ID is required'],
+    trim: true
+  },
+  gymId: {
+    type: String,
+    required: [true, 'Gym ID is required'],
+    trim: true
+  },
+  
+  days: [daySchema]
 }, {
   timestamps: true,
   toJSON: {
@@ -101,5 +124,9 @@ weeklyScheduleSchema.pre('validate', function(next) {
   }
   next();
 });
+
+// Indexes for better query performance
+weeklyScheduleSchema.index({ locationId: 1 });
+weeklyScheduleSchema.index({ gymId: 1 });
 
 export default mongoose.model<IWeeklySchedule>('WeeklySchedule', weeklyScheduleSchema); 

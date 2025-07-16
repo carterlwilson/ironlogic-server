@@ -1,0 +1,169 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-07-14T02:30:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_health_check",
+      "parentId": "fld_ironlogic_api",
+      "modified": 1689292200000,
+      "created": 1689292200000,
+      "url": "{{ _.base_url }}/api/health",
+      "name": "Health Check",
+      "description": "Basic health check endpoint",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1689292200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_register_admin",
+      "parentId": "fld_auth",
+      "modified": 1689292300000,
+      "created": 1689292300000,
+      "url": "{{ _.base_url }}/api/auth/register",
+      "name": "Register Admin User",
+      "description": "Create admin user account",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"carter@gmail.com\",\n  \"password\": \"test123\",\n  \"name\": \"Carter Wilson\",\n  \"role\": \"admin\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "id": "pair_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1689292300000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_login",
+      "parentId": "fld_auth",
+      "modified": 1689292400000,
+      "created": 1689292400000,
+      "url": "{{ _.base_url }}/api/auth/login",
+      "name": "Login",
+      "description": "Login with email and password",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"carter@gmail.com\",\n  \"password\": \"test123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "id": "pair_content_type",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1689292400000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_current_user",
+      "parentId": "fld_auth",
+      "modified": 1689292500000,
+      "created": 1689292500000,
+      "url": "{{ _.base_url }}/api/auth/me",
+      "name": "Get Current User",
+      "description": "Get current authenticated user info",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1689292500000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_ironlogic_api",
+      "parentId": "wrk_ironlogic",
+      "modified": 1689292100000,
+      "created": 1689292100000,
+      "name": "IronLogic API",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1689292100000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_auth",
+      "parentId": "fld_ironlogic_api",
+      "modified": 1689292150000,
+      "created": 1689292150000,
+      "name": "Authentication",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1689292150000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_ironlogic",
+      "parentId": null,
+      "modified": 1689292000000,
+      "created": 1689292000000,
+      "name": "IronLogic Server",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_ironlogic",
+      "modified": 1689292050000,
+      "created": 1689292050000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3001"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1689292050000,
+      "_type": "environment"
+    }
+  ]
+}

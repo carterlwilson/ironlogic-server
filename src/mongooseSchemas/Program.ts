@@ -224,7 +224,32 @@ const programSchema = new Schema<IProgram>({
         max: [100, 'Percentage cannot exceed 100']
       }
     }]
-  }]
+  }],
+  
+  // New fields
+  gymId: {
+    type: String,
+    required: [true, 'Gym ID is required'],
+    trim: true
+  },
+  isTemplate: {
+    type: Boolean,
+    required: [true, 'isTemplate is required'],
+    default: false
+  },
+  templateId: {
+    type: String,
+    trim: true
+  },
+  createdBy: {
+    type: String,
+    required: [true, 'Creator user ID is required'],
+    trim: true
+  },
+  clientId: {
+    type: String,
+    trim: true
+  }
 }, {
   timestamps: true,
   toJSON: { 
@@ -238,7 +263,10 @@ const programSchema = new Schema<IProgram>({
   toObject: { virtuals: true }
 });
 
-// Index for better query performance
+// Indexes for better query performance
+programSchema.index({ gymId: 1, isTemplate: 1 });
+programSchema.index({ gymId: 1, clientId: 1 });
+programSchema.index({ templateId: 1 });
 programSchema.index({ name: 1 });
 
 export const Program = mongoose.model<IProgram>('Program', programSchema); 

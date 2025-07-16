@@ -22,6 +22,10 @@ import programRoutes from './routes/programs';
 import clientRoutes from './routes/clients';
 import weeklyScheduleRoutes from './routes/weeklySchedules';
 import authRoutes from './routes/auth';
+import gymRoutes from './routes/gyms';
+import locationRoutes from './routes/locations';
+import locationScheduleRoutes from './routes/locationSchedules';
+import adminRoutes from './routes/admin';
 
 // Load environment variables
 dotenv.config();
@@ -37,8 +41,12 @@ console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     console.log('CORS check - Origin:', origin);
-    const allowedOrigin = process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com';
-    console.log('CORS - Allowed origin:', allowedOrigin);
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com',
+      'http://localhost:3000',  // Allow local development
+      'http://localhost:3002'   // Allow alternative local port
+    ];
+    console.log('CORS - Allowed origins:', allowedOrigins);
     
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
@@ -46,7 +54,7 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    if (origin === allowedOrigin) {
+    if (allowedOrigins.includes(origin)) {
       console.log('CORS: Origin allowed');
       callback(null, true);
     } else {
@@ -150,6 +158,23 @@ app.get('/api/health', (req, res) => {
 // Public routes (no authentication required)
 app.use('/api/auth', authRoutes);
 
+// System admin routes (admin role required)
+app.use('/api/admin', adminRoutes);
+
+// Gym management routes (admin/owner level)
+app.use('/api/gyms', gymRoutes);
+
+// Gym-scoped location routes  
+app.use('/api/gyms/:gymId/locations', locationRoutes);
+// Location-scoped schedule routes
+app.use('/api/gyms/:gymId/locations/:locationId/schedules', locationScheduleRoutes);
+
+// Gym-scoped client routes
+app.use('/api/gyms/:gymId/clients', clientRoutes);
+
+// Gym-scoped program routes
+app.use('/api/gyms/:gymId/programs', programRoutes);
+
 // Protected API Routes (authentication required)
 app.use('/api/users', userRoutes);
 app.use('/api/activity-groups', activityGroupRoutes);
@@ -160,8 +185,6 @@ app.use('/api/benchmark-templates', benchmarkTemplateRoutes);
 app.use('/api/activity-templates', activityTemplateRoutes);
 app.use('/api/lift-benchmarks', liftBenchmarkRoutes);
 app.use('/api/other-benchmarks', otherBenchmarkRoutes);
-app.use('/api/programs', programRoutes);
-app.use('/api/clients', clientRoutes);
 app.use('/api/weekly-schedules', weeklyScheduleRoutes);
 
 // Start server

@@ -1,0 +1,354 @@
+{
+  "title": "IronLogic Admin API Specification",
+  "version": "1.0.0",
+  "description": "API endpoints for admin functionality in IronLogic server",
+  "baseUrl": "http://localhost:3001/api/admin",
+  "authentication": {
+    "type": "session-based",
+    "required": "System role 'admin' required for all endpoints",
+    "header": "Cookie-based session authentication"
+  },
+  "endpoints": [
+    {
+      "id": "get-all-gyms",
+      "method": "GET",
+      "path": "/gyms",
+      "summary": "Get all gyms with owner info and counts",
+      "description": "Returns a list of all active gyms with owner information, location count, and member count",
+      "authentication": "Required - System admin role",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Success",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Gym unique identifier",
+                          "example": "64f7e8c8b4a1234567890123"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Gym name",
+                          "example": "PowerFit Gym"
+                        },
+                        "address": {
+                          "type": "string",
+                          "description": "Gym address",
+                          "example": "123 Main St, City, State 12345"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "description": "Gym phone number",
+                          "example": "+1-555-123-4567"
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Gym email",
+                          "example": "info@powerfitgym.com"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Gym creation timestamp",
+                          "example": "2023-09-06T10:30:00.000Z"
+                        },
+                        "owner": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Owner user ID",
+                              "example": "64f7e8c8b4a1234567890456"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Owner name",
+                              "example": "John Smith"
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "Owner email",
+                              "example": "john@powerfitgym.com"
+                            }
+                          }
+                        },
+                        "locationCount": {
+                          "type": "number",
+                          "description": "Number of active locations",
+                          "example": 3
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Number of active members",
+                          "example": 150
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Insufficient permissions - Admin role required"
+        },
+        "500": {
+          "description": "Server error"
+        }
+      }
+    },
+    {
+      "id": "get-gym-details",
+      "method": "GET",
+      "path": "/gyms/{gymId}/details",
+      "summary": "Get detailed gym information",
+      "description": "Returns full gym details including locations and owner information",
+      "authentication": "Required - System admin role",
+      "parameters": [
+        {
+          "name": "gymId",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": "Gym unique identifier",
+          "example": "64f7e8c8b4a1234567890123"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Success",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Gym unique identifier",
+                        "example": "64f7e8c8b4a1234567890123"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Gym name",
+                        "example": "PowerFit Gym"
+                      },
+                      "address": {
+                        "type": "string",
+                        "description": "Gym address",
+                        "example": "123 Main St, City, State 12345"
+                      },
+                      "phone": {
+                        "type": "string",
+                        "description": "Gym phone number",
+                        "example": "+1-555-123-4567"
+                      },
+                      "email": {
+                        "type": "string",
+                        "description": "Gym email",
+                        "example": "info@powerfitgym.com"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Gym description",
+                        "example": "Premier fitness facility with state-of-the-art equipment"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Gym creation timestamp",
+                        "example": "2023-09-06T10:30:00.000Z"
+                      },
+                      "owner": {
+                        "type": "object",
+                        "nullable": true,
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Owner user ID",
+                            "example": "64f7e8c8b4a1234567890456"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Owner name",
+                            "example": "John Smith"
+                          },
+                          "email": {
+                            "type": "string",
+                            "description": "Owner email",
+                            "example": "john@powerfitgym.com"
+                          }
+                        }
+                      },
+                      "locations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Location unique identifier",
+                              "example": "64f7e8c8b4a1234567890789"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Location name",
+                              "example": "Main Floor"
+                            },
+                            "address": {
+                              "type": "string",
+                              "description": "Location address",
+                              "example": "123 Main St, Floor 1, City, State 12345"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Insufficient permissions - Admin role required"
+        },
+        "404": {
+          "description": "Gym not found"
+        },
+        "500": {
+          "description": "Server error"
+        }
+      }
+    },
+    {
+      "id": "get-owner-users",
+      "method": "GET",
+      "path": "/users/owners",
+      "summary": "Get all users with owner role",
+      "description": "Returns a list of all users who have owner role in any gym, including their assignment status",
+      "authentication": "Required - System admin role",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Success",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "User unique identifier",
+                          "example": "64f7e8c8b4a1234567890456"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "User's full name",
+                          "example": "John Smith"
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "User's email address",
+                          "example": "john@powerfitgym.com"
+                        },
+                        "assignedGymId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "ID of gym they own, null if available for assignment",
+                          "example": "64f7e8c8b4a1234567890123"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Insufficient permissions - Admin role required"
+        },
+        "500": {
+          "description": "Server error"
+        }
+      }
+    }
+  ],
+  "commonHeaders": {
+    "Content-Type": "application/json",
+    "Cookie": "Session cookie for authentication"
+  },
+  "errorResponses": {
+    "401": {
+      "description": "Authentication required",
+      "example": {
+        "success": false,
+        "message": "Authentication required"
+      }
+    },
+    "403": {
+      "description": "Insufficient permissions",
+      "example": {
+        "success": false,
+        "message": "Insufficient permissions"
+      }
+    },
+    "500": {
+      "description": "Server error",
+      "example": {
+        "success": false,
+        "message": "Server error"
+      }
+    }
+  },
+  "implementationNotes": [
+    "All endpoints require system admin authentication via session-based cookies",
+    "Responses follow consistent format with 'success' boolean and 'data' payload",
+    "Error responses include descriptive 'message' field",
+    "All timestamps are in ISO 8601 format",
+    "The owner field can be null if no owner is assigned to a gym",
+    "Location count and member count are aggregated in real-time",
+    "Only active gyms and locations are included in responses"
+  ]
+}

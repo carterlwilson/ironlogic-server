@@ -17,10 +17,18 @@ const timeSlotSchema = new Schema({
     min: 1
   },
   clientIds: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Client'
+    type: String,
+    trim: true
+  }],
+  trainerIds: [{
+    type: String,
+    trim: true
   }],
   notes: {
+    type: String,
+    trim: true
+  },
+  activityType: {
     type: String,
     trim: true
   }
@@ -46,11 +54,20 @@ const weeklyScheduleSchema = new Schema({
     type: String,
     trim: true
   },
-  days: [daySchema],
-  isBaseline: {
-    type: Boolean,
-    default: false
-  }
+  
+  // Modified fields
+  locationId: {
+    type: String,
+    required: [true, 'Location ID is required'],
+    trim: true
+  },
+  gymId: {
+    type: String,
+    required: [true, 'Gym ID is required'],
+    trim: true
+  },
+  
+  days: [daySchema]
 }, {
   timestamps: true,
   toJSON: {
@@ -79,5 +96,9 @@ weeklyScheduleSchema.pre('validate', function(next) {
   }
   next();
 });
+
+// Indexes for better query performance
+weeklyScheduleSchema.index({ locationId: 1 });
+weeklyScheduleSchema.index({ gymId: 1 });
 
 export default weeklyScheduleSchema; 

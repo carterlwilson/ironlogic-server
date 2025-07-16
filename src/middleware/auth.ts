@@ -1,5 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import passport from 'passport';
+import { GymMembership } from '../mongooseSchemas/GymMembership';
+import { Gym } from '../mongooseSchemas/Gym';
+
+// Extend Request interface to include gym context
+declare global {
+  namespace Express {
+    interface Request {
+      gymContext?: {
+        gym: any;
+        membership: any;
+        userRole: 'owner' | 'trainer' | 'client';
+      };
+    }
+  }
+}
 
 // Middleware to check if user is authenticated with any role
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -120,4 +135,118 @@ export const authRateLimit = {
     success: false,
     message: 'Too many authentication attempts, please try again later'
   }
-}; 
+};
+
+// Gym context middleware - validates gym access and adds to request
+export const addGymContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const gymId = req.params.gymId;
+    
+    if (!gymId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Gym ID is required'
+      });
+    }
+
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = (req.user as any).id;
+
+    // Admin users have access to all gyms
+    if ((req.user as any).role === 'admin') {
+      const gym = await Gym.findById(gymId);
+      if (!gym) {
+        return res.status(404).json({
+          success: false,
+          message: 'Gym not found'
+        });
+      }
+
+      req.gymContext = {
+        gym,
+        membership: null,
+        userRole: 'owner' // Admins get owner-level permissions
+      };
+      
+      return next();
+    }
+
+    // Check if user has membership in this gym
+    const membership = await GymMembership.findOne({
+      userId,
+      gymId,
+      status: 'active'
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not a member of this gym'
+      });
+    }
+
+    // Get gym details
+    const gym = await Gym.findById(gymId);
+    if (!gym) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gym not found'
+      });
+    }
+
+    if (!gym.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'This gym is currently inactive'
+      });
+    }
+
+    // Add gym context to request
+    req.gymContext = {
+      gym,
+      membership,
+      userRole: membership.role
+    };
+
+    console.log(`Gym context added: User ${userId} has role ${membership.role} in gym ${gymId}`);
+    next();
+  } catch (error) {
+    console.error('Error in addGymContext middleware:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// Gym-scoped authorization middleware
+export const requireGymRole = (requiredRoles: ('owner' | 'trainer' | 'client')[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.gymContext) {
+      return res.status(500).json({
+        success: false,
+        message: 'Gym context not found. Make sure addGymContext middleware is used first.'
+      });
+    }
+
+    if (!requiredRoles.includes(req.gymContext.userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: `Insufficient permissions. Required: ${requiredRoles.join(' or ')}, Got: ${req.gymContext.userRole}`
+      });
+    }
+
+    next();
+  };
+};
+
+// Convenience middleware for specific gym roles
+export const requireGymOwner = requireGymRole(['owner']);
+export const requireGymTrainer = requireGymRole(['owner', 'trainer']);
+export const requireGymAccess = requireGymRole(['owner', 'trainer', 'client']); 

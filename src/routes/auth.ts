@@ -2,7 +2,9 @@ import express, { RequestHandler } from 'express';
 import passport from 'passport';
 import rateLimit from 'express-rate-limit';
 import { User } from '../mongooseSchemas/User';
-import { isNotAuthenticated, authRateLimit } from '../middleware/auth';
+import { GymMembership } from '../mongooseSchemas/GymMembership';
+import { Gym } from '../mongooseSchemas/Gym';
+import { isNotAuthenticated, authRateLimit, isAuthenticated } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -87,10 +89,57 @@ const login: RequestHandler = (req, res, next) => {
         }
       }
       
+      // Get user's gym memberships for frontend context
+      let gymMemberships: any[] = [];
+      try {
+        if (user.role === 'admin') {
+          // Admin users can access all gyms
+          const allGyms = await Gym.find({ isActive: true }).select('-__v');
+          gymMemberships = allGyms.map(gym => ({
+            gym: gym.toObject(),
+            role: 'admin',
+            status: 'active',
+            joinedAt: gym.createdAt
+          }));
+        } else {
+          // Regular users - get their gym memberships
+          const memberships = await GymMembership.find({ 
+            userId: user._id.toString(), 
+            status: 'active' 
+          }).select('-__v');
+
+          // Get gym details for each membership
+          gymMemberships = await Promise.all(
+            memberships.map(async (membership) => {
+              const gym = await Gym.findById(membership.gymId).select('-__v');
+              if (gym) {
+                return {
+                  gym: gym.toObject(),
+                  role: membership.role,
+                  status: membership.status,
+                  joinedAt: membership.joinedAt
+                };
+              }
+              return null;
+            })
+          );
+          
+          // Filter out any null values
+          gymMemberships = gymMemberships.filter(Boolean);
+        }
+      } catch (error) {
+        console.error('Error fetching gym memberships during login:', error);
+        // Continue with login even if gym memberships fail to load
+      }
+      
       res.json({
         success: true,
         message: 'Login successful',
-        data: userData
+        data: {
+          ...userData.toObject(),
+          gymMemberships,
+          gymCount: gymMemberships.length
+        }
       });
     });
   })(req, res, next);
@@ -134,9 +183,56 @@ const getCurrentUser: RequestHandler = async (req, res) => {
     }
   }
   
+  // Get user's gym memberships for frontend context
+  let gymMemberships: any[] = [];
+  try {
+    if ((req.user as any).role === 'admin') {
+      // Admin users can access all gyms
+      const allGyms = await Gym.find({ isActive: true }).select('-__v');
+      gymMemberships = allGyms.map(gym => ({
+        gym: gym.toObject(),
+        role: 'admin',
+        status: 'active',
+        joinedAt: gym.createdAt
+      }));
+    } else {
+      // Regular users - get their gym memberships
+      const memberships = await GymMembership.find({ 
+        userId: (req.user as any)._id.toString(), 
+        status: 'active' 
+      }).select('-__v');
+
+      // Get gym details for each membership
+      gymMemberships = await Promise.all(
+        memberships.map(async (membership) => {
+          const gym = await Gym.findById(membership.gymId).select('-__v');
+          if (gym) {
+            return {
+              gym: gym.toObject(),
+              role: membership.role,
+              status: membership.status,
+              joinedAt: membership.joinedAt
+            };
+          }
+          return null;
+        })
+      );
+      
+      // Filter out any null values
+      gymMemberships = gymMemberships.filter(Boolean);
+    }
+  } catch (error) {
+    console.error('Error fetching gym memberships:', error);
+    // Continue with response even if gym memberships fail to load
+  }
+  
   res.json({
     success: true,
-    data: userData
+    data: {
+      ...(userData as any).toObject(),
+      gymMemberships,
+      gymCount: gymMemberships.length
+    }
   });
 };
 
@@ -189,11 +285,173 @@ const changePassword: RequestHandler = async (req, res) => {
   }
 };
 
+// GET /api/auth/my-gyms - List user's gym memberships
+const getMyGyms: RequestHandler = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const userId = (req.user as any)._id.toString();
+
+    // Admin users can see all gyms
+    if ((req.user as any).role === 'admin') {
+      const allGyms = await Gym.find({ isActive: true }).select('-__v');
+      const gymsWithRole = allGyms.map(gym => ({
+        gym: gym.toObject(),
+        role: 'admin',
+        status: 'active',
+        joinedAt: gym.createdAt
+      }));
+
+      res.json({
+        success: true,
+        count: gymsWithRole.length,
+        data: gymsWithRole
+      });
+      return;
+    }
+
+    // Regular users - get their gym memberships
+    const memberships = await GymMembership.find({ 
+      userId, 
+      status: 'active' 
+    }).select('-__v');
+
+    // Get gym details for each membership
+    const gymsWithMemberships = await Promise.all(
+      memberships.map(async (membership) => {
+        const gym = await Gym.findById(membership.gymId).select('-__v');
+        return {
+          gym: gym?.toObject(),
+          role: membership.role,
+          status: membership.status,
+          joinedAt: membership.joinedAt
+        };
+      })
+    );
+
+    // Filter out any gyms that weren't found
+    const validGyms = gymsWithMemberships.filter(item => item.gym);
+
+    res.json({
+      success: true,
+      count: validGyms.length,
+      data: validGyms
+    });
+  } catch (error) {
+    console.error('Error fetching user gyms:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// POST /api/auth/select-gym/:gymId - Set current gym context
+const selectGym: RequestHandler = async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const { gymId } = req.params;
+    const userId = (req.user as any)._id.toString();
+
+    // Admin users can select any gym
+    if ((req.user as any).role === 'admin') {
+      const gym = await Gym.findById(gymId);
+      if (!gym) {
+        res.status(404).json({
+          success: false,
+          message: 'Gym not found'
+        });
+        return;
+      }
+
+      // Update user's current gym
+      await User.findByIdAndUpdate(userId, { currentGymId: gymId });
+
+      res.json({
+        success: true,
+        message: 'Gym context updated',
+        data: {
+          gym: gym.toObject(),
+          role: 'admin'
+        }
+      });
+      return;
+    }
+
+    // Regular users - verify gym membership
+    const membership = await GymMembership.findOne({
+      userId,
+      gymId,
+      status: 'active'
+    });
+
+    if (!membership) {
+      res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not a member of this gym'
+      });
+      return;
+    }
+
+    const gym = await Gym.findById(gymId);
+    if (!gym) {
+      res.status(404).json({
+        success: false,
+        message: 'Gym not found'
+      });
+      return;
+    }
+
+    if (!gym.isActive) {
+      res.status(403).json({
+        success: false,
+        message: 'This gym is currently inactive'
+      });
+      return;
+    }
+
+    // Update user's current gym
+    await User.findByIdAndUpdate(userId, { currentGymId: gymId });
+
+    res.json({
+      success: true,
+      message: 'Gym context updated',
+      data: {
+        gym: gym.toObject(),
+        role: membership.role
+      }
+    });
+  } catch (error) {
+    console.error('Error selecting gym:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 // Route definitions
 router.post('/register', authLimiter, isNotAuthenticated as any, register);
 router.post('/login', authLimiter, isNotAuthenticated as any, login);
 router.post('/logout', logout);
 router.get('/me', getCurrentUser);
 router.post('/change-password', changePassword);
+
+// Gym context management routes
+router.get('/my-gyms', getMyGyms);
+router.post('/select-gym/:gymId', selectGym);
 
 export default router; 

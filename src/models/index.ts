@@ -15,4 +15,7 @@ export * from './Program';
 export * from './User';
 export * from './Week';
 export * from './WeeklySchedule';
-export * from './ActivityGroup'; 
+export * from './ActivityGroup';
+export * from './Gym';
+export * from './Location';
+export * from './GymMembership'; 
