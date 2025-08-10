@@ -1,4 +1,5 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { Location } from '../mongooseSchemas/Location';
 import { ILocation } from '../models/Location';
 import { addGymContext, requireGymAccess, requireGymOwner } from '../middleware/auth';
@@ -171,11 +172,11 @@ const deleteLocation: RequestHandler = async (req, res) => {
 };
 
 // Route definitions (all routes are gym-scoped via :gymId parameter)
-// Note: addGymContext middleware is applied at the router level in server.ts
-router.get('/', addGymContext as any, requireGymAccess as any, getGymLocations);
-router.get('/:locationId', addGymContext as any, requireGymAccess as any, getLocationById);
-router.post('/', addGymContext as any, requireGymOwner as any, createLocation);
-router.put('/:locationId', addGymContext as any, requireGymOwner as any, updateLocation);
-router.delete('/:locationId', addGymContext as any, requireGymOwner as any, deleteLocation);
+// All routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getGymLocations);
+router.get('/:locationId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getLocationById);
+router.post('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, createLocation);
+router.put('/:locationId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, updateLocation);
+router.delete('/:locationId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, deleteLocation);
 
 export default router;

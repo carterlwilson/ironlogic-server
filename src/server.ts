@@ -1,12 +1,13 @@
 import express from 'express';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import session from 'express-session';
 import passport from 'passport';
 import { connectDB } from './config/database';
 import './config/passport'; // Import passport configuration
 import mongoose from 'mongoose';
-import MongoStore from 'connect-mongo';
 
 // Import routes
 import userRoutes from './routes/users';
@@ -16,8 +17,7 @@ import accessoryLiftActivityRoutes from './routes/accessoryLiftActivities';
 import otherActivityRoutes from './routes/otherActivities';
 import benchmarkTemplateRoutes from './routes/benchmarkTemplates';
 import activityTemplateRoutes from './routes/activityTemplates';
-import liftBenchmarkRoutes from './routes/liftBenchmarks';
-import otherBenchmarkRoutes from './routes/otherBenchmarks';
+import benchmarkRoutes from './routes/benchmarks';
 import programRoutes from './routes/programs';
 import clientRoutes from './routes/clients';
 import weeklyScheduleRoutes from './routes/weeklySchedules';
@@ -25,13 +25,18 @@ import authRoutes from './routes/auth';
 import gymRoutes from './routes/gyms';
 import locationRoutes from './routes/locations';
 import locationScheduleRoutes from './routes/locationSchedules';
+import coachScheduleRoutes from './routes/coachSchedules';
+import scheduleOverviewRoutes from './routes/scheduleOverview';
 import adminRoutes from './routes/admin';
+import progressionRoutes from './routes/progression';
+import workoutRoutes from './routes/workouts';
+// import { startWeeklyProgressionJobs } from './jobs/weeklyProgression';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // Trust proxy for Render deployment
 app.set('trust proxy', 1);
@@ -43,8 +48,12 @@ const corsOptions = {
     console.log('CORS check - Origin:', origin);
     const allowedOrigins = [
       process.env.CORS_ORIGIN || 'https://ironlogic-client.onrender.com',
-      'http://localhost:3000',  // Allow local development
-      'http://localhost:3002'   // Allow alternative local port
+      'https://client.local:3000',  // Client app on HTTPS
+      'https://mobile.local:3001',  // Mobile app on HTTPS
+      'https://api.local:3002',     // API server on HTTPS
+      'http://localhost:3000',  // HTTP fallback for localhost
+      'http://localhost:3001',  // HTTP fallback for localhost
+      'http://localhost:3002'   // HTTP fallback for localhost
     ];
     console.log('CORS - Allowed origins:', allowedOrigins);
     
@@ -74,66 +83,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration with debugging
-console.log('MongoDB URL for sessions:', process.env.MONGODB_URL);
-console.log('NODE_ENV:', process.env.NODE_ENV);
+// JWT Authentication - no sessions needed
 
-// Create session store immediately
-console.log('Creating MongoDB session store...');
-const sessionStore = MongoStore.create({
-  mongoUrl: process.env.MONGODB_URL,
-  collectionName: 'sessions',
-  ttl: 24 * 60 * 60 // 24 hours in seconds
-});
-
-console.log('Session store created, setting up event listeners...');
-
-// Add store event listeners for debugging
-sessionStore.on('connected', () => {
-  console.log('✅ MongoDB session store connected');
-});
-
-sessionStore.on('error', (error: any) => {
-  console.error('❌ MongoDB session store error:', error);
-});
-
-// Check if already connected
-if ((sessionStore as any).client && (sessionStore as any).client.topology && (sessionStore as any).client.topology.isConnected()) {
-  console.log('✅ MongoDB session store already connected');
-}
-
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
-  resave: false,
-  saveUninitialized: false,
-  store: sessionStore,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-  }
-}));
-
-// Add session debugging middleware (after Passport initialization)
-const sessionDebugMiddleware = (req: any, res: any, next: any) => {
-  console.log('=== SESSION DEBUG ===');
-  console.log('Session ID:', req.sessionID);
-  console.log('User authenticated:', req.isAuthenticated ? req.isAuthenticated() : 'Passport not initialized');
-  console.log('User data:', req.user);
-  console.log('Session store:', req.sessionStore ? 'Connected' : 'Not connected');
-  console.log('Cookies:', req.headers.cookie);
-  console.log('====================');
-  next();
-};
-
-// Initialize Passport
+// Initialize Passport (without sessions)
 app.use(passport.initialize());
-app.use(passport.session());
-
-// Add session debugging middleware after Passport is initialized
-app.use(sessionDebugMiddleware);
 
 // Routes
 app.get('/', (req, res) => {
@@ -166,14 +119,29 @@ app.use('/api/gyms', gymRoutes);
 
 // Gym-scoped location routes  
 app.use('/api/gyms/:gymId/locations', locationRoutes);
-// Location-scoped schedule routes
+// Location-scoped schedule routes (legacy - keep for backward compatibility)
 app.use('/api/gyms/:gymId/locations/:locationId/schedules', locationScheduleRoutes);
+
+// Coach-based schedule routes (new)
+app.use('/api/gyms/:gymId/coaches', coachScheduleRoutes);
+
+// Schedule overview and aggregation routes
+app.use('/api/gyms/:gymId/schedules', scheduleOverviewRoutes);
 
 // Gym-scoped client routes
 app.use('/api/gyms/:gymId/clients', clientRoutes);
 
 // Gym-scoped program routes
 app.use('/api/gyms/:gymId/programs', programRoutes);
+
+// Client-scoped benchmark routes
+app.use('/api/gyms/:gymId/clients/:clientId/benchmarks', benchmarkRoutes);
+
+// Progression routes
+app.use('/api', progressionRoutes);
+
+// Workout routes (gym and client scoped)
+app.use('/api', workoutRoutes);
 
 // Protected API Routes (authentication required)
 app.use('/api/users', userRoutes);
@@ -183,8 +151,6 @@ app.use('/api/accessory-lift-activities', accessoryLiftActivityRoutes);
 app.use('/api/other-activities', otherActivityRoutes);
 app.use('/api/benchmark-templates', benchmarkTemplateRoutes);
 app.use('/api/activity-templates', activityTemplateRoutes);
-app.use('/api/lift-benchmarks', liftBenchmarkRoutes);
-app.use('/api/other-benchmarks', otherBenchmarkRoutes);
 app.use('/api/weekly-schedules', weeklyScheduleRoutes);
 
 // Start server
@@ -193,12 +159,21 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
     
-    // Start the server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    // Initialize weekly progression cron jobs
+    // TODO: Re-enable after fixing node-cron installation
+    // await startWeeklyProgressionJobs();
+    
+    // Start the server with HTTPS
+    const httpsOptions = {
+      key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'api.local.key')),
+      cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'api.local.crt'))
+    };
+    
+    https.createServer(httpsOptions, app).listen(PORT, () => {
+      console.log(`🚀 Server running on https://api.local:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API Documentation: http://localhost:${PORT}/api/health`);
-      console.log(`🔐 Authentication: http://localhost:${PORT}/api/auth`);
+      console.log(`🔗 API Documentation: https://api.local:${PORT}/api/health`);
+      console.log(`🔐 Authentication: https://api.local:${PORT}/api/auth`);
       console.log(`📋 Available endpoints:`);
       console.log(`   - Auth: /api/auth`);
       console.log(`   - Users: /api/users`);

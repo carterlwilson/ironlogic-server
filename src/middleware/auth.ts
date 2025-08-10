@@ -149,14 +149,14 @@ export const addGymContext = async (req: Request, res: Response, next: NextFunct
       });
     }
 
-    if (!req.isAuthenticated() || !req.user) {
+    if (!req.user) {
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
     }
 
-    const userId = (req.user as any).id;
+    const userId = (req.user as any)._id || (req.user as any).id;
 
     // Admin users have access to all gyms
     if ((req.user as any).role === 'admin') {
@@ -249,4 +249,5 @@ export const requireGymRole = (requiredRoles: ('owner' | 'trainer' | 'client')[]
 // Convenience middleware for specific gym roles
 export const requireGymOwner = requireGymRole(['owner']);
 export const requireGymTrainer = requireGymRole(['owner', 'trainer']);
-export const requireGymAccess = requireGymRole(['owner', 'trainer', 'client']); 
+export const requireGymAccess = requireGymRole(['owner', 'trainer', 'client']);
+export const requireClientAccess = requireGymRole(['client']); 

@@ -121,6 +121,11 @@ const daySchema = new Schema<IDay>({
     unique: true,
     trim: true
   },
+  name: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Name cannot exceed 100 characters']
+  },
   primaryLiftActivities: [primaryLiftActivitySubSchema],
   accessoryLiftActivities: [accessoryLiftActivitySubSchema],
   otherActivities: [otherActivitySubSchema]

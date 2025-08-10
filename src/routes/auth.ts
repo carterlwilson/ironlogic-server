@@ -5,6 +5,7 @@ import { User } from '../mongooseSchemas/User';
 import { GymMembership } from '../mongooseSchemas/GymMembership';
 import { Gym } from '../mongooseSchemas/Gym';
 import { isNotAuthenticated, authRateLimit, isAuthenticated } from '../middleware/auth';
+import { generateTokens } from '../utils/jwt';
 
 const router = express.Router();
 
@@ -61,7 +62,7 @@ const register: RequestHandler = async (req, res) => {
 
 // POST /api/auth/login
 const login: RequestHandler = (req, res, next) => {
-  passport.authenticate('local', (err: any, user: any, info: any) => {
+  passport.authenticate('local', async (err: any, user: any, info: any) => {
     if (err) {
       return next(err);
     }
@@ -74,10 +75,8 @@ const login: RequestHandler = (req, res, next) => {
       return;
     }
     
-    req.logIn(user, async (err) => {
-      if (err) {
-        return next(err);
-      }
+    // JWT login - no session needed
+    try {
       
       // Find client data if user has role 'user'
       let userData = user;
@@ -132,16 +131,36 @@ const login: RequestHandler = (req, res, next) => {
         // Continue with login even if gym memberships fail to load
       }
       
+      // Generate JWT tokens
+      const tokens = generateTokens({
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role
+      });
+
+      console.log('JWT tokens generated for user:', user.email);
+
       res.json({
         success: true,
         message: 'Login successful',
         data: {
-          ...userData.toObject(),
+          ...(userData.toObject ? userData.toObject() : userData),
           gymMemberships,
           gymCount: gymMemberships.length
+        },
+        tokens: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken
         }
       });
-    });
+    } catch (error) {
+      console.error('Error during JWT login:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Login failed'
+      });
+      return;
+    }
   })(req, res, next);
 };
 
@@ -163,9 +182,10 @@ const logout: RequestHandler = (req, res) => {
   });
 };
 
-// GET /api/auth/me
+// GET /api/auth/me - now uses JWT authentication
 const getCurrentUser: RequestHandler = async (req, res) => {
-  if (!req.isAuthenticated()) {
+  // req.user is populated by JWT strategy via passport.authenticate('jwt')
+  if (!req.user) {
     res.status(401).json({
       success: false,
       message: 'Not authenticated'
@@ -176,10 +196,13 @@ const getCurrentUser: RequestHandler = async (req, res) => {
   // Find client data if user has role 'user'
   let userData = req.user;
   if ((req.user as any).role === 'user') {
-    const { Client } = await import('../mongooseSchemas/Client');
-    const client = await Client.findOne({ userId: (req.user as any)._id.toString() });
-    if (client) {
-      userData = { ...(req.user as any).toObject(), client };
+    // Check if client data is already attached from deserializeUser
+    if (!(req.user as any).client) {
+      const { Client } = await import('../mongooseSchemas/Client');
+      const client = await Client.findOne({ userId: (req.user as any)._id.toString() });
+      if (client) {
+        userData = { ...(req.user as any).toObject(), client };
+      }
     }
   }
   
@@ -229,7 +252,7 @@ const getCurrentUser: RequestHandler = async (req, res) => {
   res.json({
     success: true,
     data: {
-      ...(userData as any).toObject(),
+      ...((userData as any).toObject ? (userData as any).toObject() : (userData as any)),
       gymMemberships,
       gymCount: gymMemberships.length
     }
@@ -241,7 +264,7 @@ const changePassword: RequestHandler = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -288,7 +311,7 @@ const changePassword: RequestHandler = async (req, res) => {
 // GET /api/auth/my-gyms - List user's gym memberships
 const getMyGyms: RequestHandler = async (req, res) => {
   try {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -355,7 +378,7 @@ const getMyGyms: RequestHandler = async (req, res) => {
 // POST /api/auth/select-gym/:gymId - Set current gym context
 const selectGym: RequestHandler = async (req, res) => {
   try {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -447,11 +470,11 @@ const selectGym: RequestHandler = async (req, res) => {
 router.post('/register', authLimiter, isNotAuthenticated as any, register);
 router.post('/login', authLimiter, isNotAuthenticated as any, login);
 router.post('/logout', logout);
-router.get('/me', getCurrentUser);
-router.post('/change-password', changePassword);
+router.get('/me', passport.authenticate('jwt', { session: false }), getCurrentUser);
+router.post('/change-password', passport.authenticate('jwt', { session: false }), changePassword);
 
 // Gym context management routes
-router.get('/my-gyms', getMyGyms);
-router.post('/select-gym/:gymId', selectGym);
+router.get('/my-gyms', passport.authenticate('jwt', { session: false }), getMyGyms);
+router.post('/select-gym/:gymId', passport.authenticate('jwt', { session: false }), selectGym);
 
 export default router; 

@@ -1,4 +1,5 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { Gym } from '../mongooseSchemas/Gym';
 import { GymMembership } from '../mongooseSchemas/GymMembership';
 import { User } from '../mongooseSchemas/User';
@@ -321,17 +322,17 @@ const removeGymMember: RequestHandler = async (req, res) => {
   }
 };
 
-// Route definitions
-router.get('/', isAdmin as any, getAllGyms);
-router.get('/:gymId', addGymContext as any, getGymById);
-router.post('/', isAdmin as any, createGym);
-router.put('/:gymId', addGymContext as any, requireGymOwner as any, updateGym);
-router.delete('/:gymId', isAdmin as any, deleteGym);
+// Route definitions - All routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), isAdmin as any, getAllGyms);
+router.get('/:gymId', passport.authenticate('jwt', { session: false }), addGymContext as any, getGymById);
+router.post('/', passport.authenticate('jwt', { session: false }), isAdmin as any, createGym);
+router.put('/:gymId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, updateGym);
+router.delete('/:gymId', passport.authenticate('jwt', { session: false }), isAdmin as any, deleteGym);
 
-// Gym membership management routes
-router.get('/:gymId/members', addGymContext as any, requireGymOwner as any, getGymMembers);
-router.post('/:gymId/members', addGymContext as any, requireGymOwner as any, addGymMember);
-router.put('/:gymId/members/:userId', addGymContext as any, requireGymOwner as any, updateGymMember);
-router.delete('/:gymId/members/:userId', addGymContext as any, requireGymOwner as any, removeGymMember);
+// Gym membership management routes - All require JWT authentication
+router.get('/:gymId/members', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, getGymMembers);
+router.post('/:gymId/members', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, addGymMember);
+router.put('/:gymId/members/:userId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, updateGymMember);
+router.delete('/:gymId/members/:userId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, removeGymMember);
 
 export default router;

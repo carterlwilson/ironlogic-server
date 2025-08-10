@@ -1,4 +1,5 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { User } from '../mongooseSchemas/User';
 import { IUser } from '../models/User';
 import { isAuthenticatedAsAdmin } from '../middleware/auth';
@@ -150,7 +151,8 @@ const deleteUser: RequestHandler = async (req, res): Promise<void> => {
 };
 
 // Route definitions
-router.get('/', isAuthenticatedAsAdmin as any, getAllUsers);
+// Route definitions - Admin routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, getAllUsers);
 router.get('/:id', getUserById);
 router.post('/', createUser);
 router.put('/:id', updateUser);

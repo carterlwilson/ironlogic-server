@@ -8,7 +8,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "paths": {
+            "@ironlogic/shared": ["../shared/src"]
+        }
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]

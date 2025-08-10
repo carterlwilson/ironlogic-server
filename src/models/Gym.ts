@@ -8,6 +8,7 @@ export interface IGym extends Document {
   email: string;
   ownerId?: string;
   isActive: boolean;
+  timezone: string; // IANA timezone identifier (e.g., 'America/New_York')
   createdAt: Date;
   updatedAt: Date;
 }

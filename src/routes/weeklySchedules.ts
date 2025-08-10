@@ -1,4 +1,5 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import WeeklySchedule from '../models/WeeklySchedule';
 import { isAuthenticatedAsAdmin, isAuthenticated } from '../middleware/auth';
 
@@ -278,14 +279,15 @@ const createBaselineFromSchedule: RequestHandler = async (req, res): Promise<voi
 };
 
 // Route definitions
-router.get('/', isAuthenticatedAsAdmin as any, getAllWeeklySchedules);
+// All routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, getAllWeeklySchedules);
 router.get('/baseline', getBaselineSchedule);
-router.get('/current', isAuthenticated as any, getCurrentSchedule);
+router.get('/current', passport.authenticate('jwt', { session: false }), isAuthenticated as any, getCurrentSchedule);
 router.get('/:id', getWeeklyScheduleById);
-router.post('/', isAuthenticatedAsAdmin as any, createWeeklySchedule);
-router.post('/baseline/:scheduleId', isAuthenticatedAsAdmin as any, createBaselineFromSchedule);
-router.put('/current', isAuthenticated as any, updateCurrentSchedule);
-router.put('/:id', isAuthenticatedAsAdmin as any, updateWeeklySchedule);
-router.delete('/:id', isAuthenticatedAsAdmin as any, deleteWeeklySchedule);
+router.post('/', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, createWeeklySchedule);
+router.post('/baseline/:scheduleId', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, createBaselineFromSchedule);
+router.put('/current', passport.authenticate('jwt', { session: false }), isAuthenticated as any, updateCurrentSchedule);
+router.put('/:id', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, updateWeeklySchedule);
+router.delete('/:id', passport.authenticate('jwt', { session: false }), isAuthenticatedAsAdmin as any, deleteWeeklySchedule);
 
 export default router; 

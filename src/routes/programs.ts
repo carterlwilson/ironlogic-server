@@ -1,20 +1,95 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { Program } from '../mongooseSchemas/Program';
 import { IProgram } from '../models/Program';
+import { ActivityGroup } from '../mongooseSchemas/ActivityGroup';
 import { addGymContext, requireGymAccess, requireGymOwner, requireGymTrainer } from '../middleware/auth';
 
 const router = express.Router({ mergeParams: true });
+
+// Helper function to populate group names in programs
+const populateGroupNames = async (programs: any[]) => {
+  // Collect all unique group IDs from all programs
+  const groupIds = new Set<string>();
+  
+  programs.forEach(program => {
+    if (program.blocks) {
+      program.blocks.forEach((block: any) => {
+        if (block.groupTargetPercentages) {
+          block.groupTargetPercentages.forEach((gtp: any) => {
+            if (gtp.groupId) groupIds.add(gtp.groupId);
+          });
+        }
+        if (block.weeks) {
+          block.weeks.forEach((week: any) => {
+            if (week.groupTargetPercentages) {
+              week.groupTargetPercentages.forEach((gtp: any) => {
+                if (gtp.groupId) groupIds.add(gtp.groupId);
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  // Fetch activity groups if we have any group IDs
+  if (groupIds.size === 0) return programs;
+  
+  const activityGroups = await ActivityGroup.find({ 
+    _id: { $in: Array.from(groupIds) } 
+  }).select('name');
+  
+  const groupNameMap = new Map(
+    activityGroups.map(group => [group.id, group.name])
+  );
+
+  // Transform programs to include group names
+  return programs.map(program => {
+    if (!program.blocks) return program;
+    
+    const programObj = program.toObject ? program.toObject() : program;
+    
+    programObj.blocks = programObj.blocks.map((block: any) => {
+      // Populate block-level group target percentages
+      if (block.groupTargetPercentages) {
+        block.groupTargetPercentages = block.groupTargetPercentages.map((gtp: any) => ({
+          ...gtp,
+          groupName: groupNameMap.get(gtp.groupId) || undefined
+        }));
+      }
+      
+      // Populate week-level group target percentages
+      if (block.weeks) {
+        block.weeks = block.weeks.map((week: any) => {
+          if (week.groupTargetPercentages) {
+            week.groupTargetPercentages = week.groupTargetPercentages.map((gtp: any) => ({
+              ...gtp,
+              groupName: groupNameMap.get(gtp.groupId) || undefined
+            }));
+          }
+          return week;
+        });
+      }
+      
+      return block;
+    });
+    
+    return programObj;
+  });
+};
 
 // GET all programs for a gym
 const getAllPrograms: RequestHandler = async (req, res) => {
   try {
     const gymId = req.params.gymId;
     const programs = await Program.find({ gymId }).select('-__v');
+    const populatedPrograms = await populateGroupNames(programs);
     
     res.json({
       success: true,
-      count: programs.length,
-      data: programs
+      count: populatedPrograms.length,
+      data: populatedPrograms
     });
   } catch (error) {
     console.error('Error fetching programs:', error);
@@ -33,11 +108,12 @@ const getProgramTemplates: RequestHandler = async (req, res) => {
       gymId, 
       isTemplate: true 
     }).select('-__v');
+    const populatedTemplates = await populateGroupNames(templates);
     
     res.json({
       success: true,
-      count: templates.length,
-      data: templates
+      count: populatedTemplates.length,
+      data: populatedTemplates
     });
   } catch (error) {
     console.error('Error fetching program templates:', error);
@@ -65,9 +141,11 @@ const getProgramById: RequestHandler = async (req, res) => {
       return;
     }
     
+    const [populatedProgram] = await populateGroupNames([program]);
+    
     res.json({
       success: true,
-      data: program
+      data: populatedProgram
     });
   } catch (error) {
     console.error('Error fetching program:', error);
@@ -198,9 +276,11 @@ const updateProgram: RequestHandler = async (req, res) => {
       }
     }
     
+    const [populatedProgram] = await populateGroupNames([program]);
+    
     res.json({
       success: true,
-      data: program
+      data: populatedProgram
     });
   } catch (error) {
     console.error('Error updating program:', error);
@@ -257,12 +337,13 @@ const deleteProgram: RequestHandler = async (req, res) => {
 };
 
 // Route definitions (all routes are gym-scoped via :gymId parameter)
-router.get('/', addGymContext as any, requireGymAccess as any, getAllPrograms);
-router.get('/templates', addGymContext as any, requireGymAccess as any, getProgramTemplates);
-router.get('/:id', addGymContext as any, requireGymAccess as any, getProgramById);
-router.post('/', addGymContext as any, requireGymTrainer as any, createProgram);
-router.post('/:templateId/assign/:clientId', addGymContext as any, requireGymTrainer as any, assignTemplateToClient);
-router.put('/:id', addGymContext as any, requireGymTrainer as any, updateProgram);
-router.delete('/:id', addGymContext as any, requireGymOwner as any, deleteProgram);
+// All routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getAllPrograms);
+router.get('/templates', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getProgramTemplates);
+router.get('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getProgramById);
+router.post('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, createProgram);
+router.post('/:templateId/assign/:clientId', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, assignTemplateToClient);
+router.put('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, updateProgram);
+router.delete('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, deleteProgram);
 
 export default router;

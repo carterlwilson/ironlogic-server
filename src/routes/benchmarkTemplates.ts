@@ -1,7 +1,8 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { BenchmarkTemplate } from '../mongooseSchemas/BenchmarkTemplate';
 import { IBenchmarkTemplate } from '../models/BenchmarkTemplate';
-import { BenchmarkTemplateTypeEnum } from '../models/Benchmark';
+import { BenchmarkTypeEnum } from '../models/Benchmark';
 
 const router = express.Router();
 
@@ -56,7 +57,7 @@ const getBenchmarkTemplatesByType: RequestHandler = async (req, res) => {
     const { type } = req.params;
     
     // Validate the type parameter
-    if (!Object.values(BenchmarkTemplateTypeEnum).includes(type as BenchmarkTemplateTypeEnum)) {
+    if (!Object.values(BenchmarkTypeEnum).includes(type as BenchmarkTypeEnum)) {
       res.status(400).json({
         success: false,
         message: 'Invalid benchmark type'
@@ -205,13 +206,13 @@ const deleteBenchmarkTemplate: RequestHandler = async (req, res) => {
   }
 };
 
-// Route definitions
-router.get('/', getAllBenchmarkTemplates);
-router.get('/type/:type', getBenchmarkTemplatesByType);
-router.get('/:id', getBenchmarkTemplateById);
-router.post('/', createBenchmarkTemplate);
-router.put('/:id', updateBenchmarkTemplate);
-router.patch('/:id', patchBenchmarkTemplate);
-router.delete('/:id', deleteBenchmarkTemplate);
+// Route definitions - all routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), getAllBenchmarkTemplates);
+router.get('/type/:type', passport.authenticate('jwt', { session: false }), getBenchmarkTemplatesByType);
+router.get('/:id', passport.authenticate('jwt', { session: false }), getBenchmarkTemplateById);
+router.post('/', passport.authenticate('jwt', { session: false }), createBenchmarkTemplate);
+router.put('/:id', passport.authenticate('jwt', { session: false }), updateBenchmarkTemplate);
+router.patch('/:id', passport.authenticate('jwt', { session: false }), patchBenchmarkTemplate);
+router.delete('/:id', passport.authenticate('jwt', { session: false }), deleteBenchmarkTemplate);
 
 export default router; 

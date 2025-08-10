@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { IBenchmarkTemplate } from '../models/BenchmarkTemplate';
-import { BenchmarkTemplateTypeEnum } from '../models/Benchmark';
+import { BenchmarkTypeEnum } from '../models/Benchmark';
 
 const benchmarkTemplateSchema = new Schema<IBenchmarkTemplate>({
   name: {
@@ -17,7 +17,7 @@ const benchmarkTemplateSchema = new Schema<IBenchmarkTemplate>({
   },
   benchmarkType: {
     type: String,
-    enum: Object.values(BenchmarkTemplateTypeEnum),
+    enum: Object.values(BenchmarkTypeEnum),
     required: [true, 'Benchmark type is required']
   }
 }, {

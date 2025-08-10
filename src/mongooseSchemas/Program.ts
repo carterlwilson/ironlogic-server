@@ -12,6 +12,7 @@ const blockSubSchema = new Schema({
     id: String,
     days: [{
       id: String,
+      name: String,
       primaryLiftActivities: [{
         id: String,
         name: String,
@@ -78,6 +79,11 @@ const programSchema = new Schema<IProgram>({
           type: String,
           required: [true, 'Day ID is required'],
           trim: true
+        },
+        name: {
+          type: String,
+          trim: true,
+          maxlength: [100, 'Name cannot exceed 100 characters']
         },
         primaryLiftActivities: [{
           id: {

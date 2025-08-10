@@ -1,7 +1,11 @@
 import express, { RequestHandler } from 'express';
+import passport from 'passport';
 import { Client } from '../mongooseSchemas/Client';
+import { User } from '../mongooseSchemas/User';
+import { GymMembership } from '../mongooseSchemas/GymMembership';
+import { Program } from '../mongooseSchemas/Program';
 import { IClient } from '../models/Client';
-import { addGymContext, requireGymAccess, requireGymOwner } from '../middleware/auth';
+import { addGymContext, requireGymAccess, requireGymOwner, requireGymTrainer } from '../middleware/auth';
 
 const router = express.Router({ mergeParams: true });
 
@@ -9,7 +13,14 @@ const router = express.Router({ mergeParams: true });
 const getAllClients: RequestHandler = async (req, res) => {
   try {
     const gymId = req.params.gymId;
-    const clients = await Client.find({ gymId }).select('-__v');
+    const clients = await Client.find({ gymId })
+      .populate({
+        path: 'programId',
+        select: 'name isTemplate',
+        match: { isTemplate: true } // Only populate if it's a template
+      })
+      .select('-__v')
+      .sort({ firstName: 1, lastName: 1 });
     
     res.json({
       success: true,
@@ -114,38 +125,85 @@ const getClientNames: RequestHandler = async (req, res) => {
   }
 };
 
-// POST create new client
+// POST create new client (with dual User creation)
 const createClient: RequestHandler = async (req, res) => {
   try {
     const gymId = req.params.gymId;
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus } = req.body;
+    const { email, firstName, lastName, programId, weight, membershipStatus } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
     
-    // Check if client with this email already exists in this gym
-    const existingClient = await Client.findOne({ email: email.toLowerCase(), gymId });
-    if (existingClient) {
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
       res.status(400).json({
         success: false,
-        message: 'Client with this email already exists in this gym'
+        message: 'A user with this email already exists. Please use a different email address.'
       });
       return;
     }
     
+    // Check if client with this email already exists in this gym
+    const existingClient = await Client.findOne({ email: normalizedEmail, gymId });
+    if (existingClient) {
+      res.status(400).json({
+        success: false,
+        message: 'A client with this email already exists in this gym'
+      });
+      return;
+    }
+    
+    // Validate program template if provided
+    if (programId) {
+      const program = await Program.findOne({ _id: programId, gymId, isTemplate: true });
+      if (!program) {
+        res.status(400).json({
+          success: false,
+          message: 'Program template not found'
+        });
+        return;
+      }
+    }
+    
+    // Create user first
+    const newUser = await User.create({
+      email: normalizedEmail,
+      password: 'test123', // Default password as specified
+      name: `${firstName} ${lastName}`.trim(),
+      role: 'user', // System role
+      isActive: true
+    });
+    
+    // Create gym membership for the new user
+    await GymMembership.create({
+      userId: newUser._id,
+      gymId: gymId,
+      role: 'client', // Gym role
+      status: 'active'
+    });
+    
+    // Create client
     const client = await Client.create({
-      email,
+      email: normalizedEmail,
       firstName,
       lastName,
-      userId,
+      userId: newUser._id,
       gymId,
-      liftBenchmarks: liftBenchmarks || [],
-      otherBenchmarks: otherBenchmarks || [],
-      programId,
+      programId: programId || undefined,
       weight,
       membershipStatus: membershipStatus || 'active'
     });
     
+    // Populate the program template for response
+    await client.populate({
+      path: 'programId',
+      select: 'name isTemplate',
+      match: { isTemplate: true }
+    });
+    
     res.status(201).json({
       success: true,
-      data: client
+      data: client,
+      message: 'Client created successfully. Default password is "password123" - user should change on first login.'
     });
   } catch (error) {
     console.error('Error creating client:', error);
@@ -171,13 +229,36 @@ const createClient: RequestHandler = async (req, res) => {
 const updateClient: RequestHandler = async (req, res) => {
   try {
     const gymId = req.params.gymId;
-    const { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus } = req.body;
+    const { email, firstName, lastName, programId, weight, membershipStatus } = req.body;
+    
+    // Validate program template if provided
+    if (programId) {
+      const program = await Program.findOne({ _id: programId, gymId, isTemplate: true });
+      if (!program) {
+        res.status(400).json({
+          success: false,
+          message: 'Program template not found'
+        });
+        return;
+      }
+    }
     
     const client = await Client.findOneAndUpdate(
       { _id: req.params.id, gymId },
-      { email, firstName, lastName, userId, liftBenchmarks, otherBenchmarks, programId, weight, membershipStatus },
+      { 
+        email: email ? email.toLowerCase().trim() : undefined,
+        firstName, 
+        lastName, 
+        programId: programId || undefined, 
+        weight, 
+        membershipStatus 
+      },
       { new: true, runValidators: true }
-    ).select('-__v');
+    ).populate({
+      path: 'programId',
+      select: 'name isTemplate',
+      match: { isTemplate: true }
+    }).select('-__v');
     
     if (!client) {
       res.status(404).json({
@@ -193,6 +274,17 @@ const updateClient: RequestHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating client:', error);
+    
+    // Handle validation errors
+    if (error instanceof Error && error.name === 'ValidationError') {
+      const messages = Object.values((error as any).errors).map((err: any) => err.message);
+      res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -231,14 +323,11 @@ const patchClient: RequestHandler = async (req, res) => {
   }
 };
 
-// DELETE client
+// DELETE client (with user deactivation)
 const deleteClient: RequestHandler = async (req, res) => {
   try {
     const gymId = req.params.gymId;
-    const client = await Client.findOneAndDelete({ 
-      _id: req.params.id, 
-      gymId 
-    });
+    const client = await Client.findOne({ _id: req.params.id, gymId });
     
     if (!client) {
       res.status(404).json({
@@ -248,9 +337,21 @@ const deleteClient: RequestHandler = async (req, res) => {
       return;
     }
     
+    // Deactivate the associated user as specified
+    await User.findByIdAndUpdate(client.userId, { isActive: false });
+    
+    // Set gym membership to inactive
+    await GymMembership.findOneAndUpdate(
+      { userId: client.userId, gymId: gymId },
+      { status: 'inactive' }
+    );
+    
+    // Delete the client record
+    await Client.findByIdAndDelete(client._id);
+    
     res.json({
       success: true,
-      message: 'Client deleted successfully'
+      message: 'Client deleted successfully and user deactivated'
     });
   } catch (error) {
     console.error('Error deleting client:', error);
@@ -262,13 +363,14 @@ const deleteClient: RequestHandler = async (req, res) => {
 };
 
 // Route definitions (all routes are gym-scoped via :gymId parameter)
-router.get('/', addGymContext as any, requireGymAccess as any, getAllClients);
-router.get('/names', addGymContext as any, requireGymAccess as any, getClientNames);
-router.get('/email/:email', addGymContext as any, requireGymAccess as any, getClientByEmail);
-router.get('/:id', addGymContext as any, requireGymAccess as any, getClientById);
-router.post('/', addGymContext as any, requireGymOwner as any, createClient);
-router.put('/:id', addGymContext as any, requireGymOwner as any, updateClient);
-router.patch('/:id', addGymContext as any, requireGymOwner as any, patchClient);
-router.delete('/:id', addGymContext as any, requireGymOwner as any, deleteClient);
+// All routes require JWT authentication
+router.get('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getAllClients);
+router.get('/names', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getClientNames);
+router.get('/email/:email', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getClientByEmail);
+router.get('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymAccess as any, getClientById);
+router.post('/', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, createClient);
+router.put('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, updateClient);
+router.patch('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymTrainer as any, patchClient);
+router.delete('/:id', passport.authenticate('jwt', { session: false }), addGymContext as any, requireGymOwner as any, deleteClient); // Keep delete as owner-only
 
 export default router; 

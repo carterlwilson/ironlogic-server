@@ -1,0 +1,119 @@
+/**
+ * Weekly progression cron job
+ * Runs every Sunday at midnight in each gym's timezone
+ */
+
+import * as cron from 'node-cron';
+import { Gym } from '../mongooseSchemas/Gym';
+import { weeklyAutoProgression } from '../services/progressionService';
+
+class WeeklyProgressionScheduler {
+  private jobs: Map<string, cron.ScheduledTask> = new Map();
+
+  /**
+   * Initialize weekly progression jobs for all active gyms
+   */
+  async initialize() {
+    console.log('Initializing weekly progression scheduler...');
+    
+    try {
+      const gyms = await Gym.find({ isActive: true });
+      
+      for (const gym of gyms) {
+        this.scheduleGymProgression(gym.id, gym.timezone);
+      }
+      
+      console.log(`Scheduled weekly progression for ${gyms.length} gyms`);
+    } catch (error) {
+      console.error('Failed to initialize weekly progression scheduler:', error);
+    }
+  }
+
+  /**
+   * Schedule weekly progression for a specific gym
+   */
+  scheduleGymProgression(gymId: string, timezone: string) {
+    // Remove existing job if it exists
+    const existingJob = this.jobs.get(gymId);
+    if (existingJob) {
+      existingJob.destroy();
+    }
+
+    // Schedule new job for Sunday at midnight in gym's timezone
+    const job = cron.schedule('0 0 * * 0', async () => {
+      console.log(`Running weekly progression for gym ${gymId} (${timezone})`);
+      
+      try {
+        const result = await weeklyAutoProgression();
+        console.log(`Weekly progression completed for gym ${gymId}:`, {
+          totalClients: result.totalClients,
+          successful: result.successfulUpdates,
+          failed: result.failedUpdates
+        });
+      } catch (error) {
+        console.error(`Weekly progression failed for gym ${gymId}:`, error);
+      }
+    }, {
+      timezone: timezone
+    });
+
+    this.jobs.set(gymId, job);
+    console.log(`Scheduled weekly progression for gym ${gymId} in timezone ${timezone}`);
+  }
+
+  /**
+   * Add or update gym progression schedule
+   */
+  async updateGymSchedule(gymId: string, timezone: string) {
+    this.scheduleGymProgression(gymId, timezone);
+  }
+
+  /**
+   * Remove gym progression schedule
+   */
+  removeGymSchedule(gymId: string) {
+    const job = this.jobs.get(gymId);
+    if (job) {
+      job.destroy();
+      this.jobs.delete(gymId);
+      console.log(`Removed weekly progression schedule for gym ${gymId}`);
+    }
+  }
+
+  /**
+   * Get status of all scheduled jobs
+   */
+  getScheduleStatus() {
+    const status = [];
+    for (const [gymId, job] of this.jobs) {
+      status.push({
+        gymId,
+        running: job.getStatus() === 'scheduled'
+      });
+    }
+    return status;
+  }
+
+  /**
+   * Stop all scheduled jobs
+   */
+  stopAll() {
+    for (const [gymId, job] of this.jobs) {
+      job.destroy();
+      console.log(`Stopped weekly progression for gym ${gymId}`);
+    }
+    this.jobs.clear();
+    console.log('All weekly progression jobs stopped');
+  }
+}
+
+// Create singleton instance
+export const weeklyProgressionScheduler = new WeeklyProgressionScheduler();
+
+/**
+ * Start the weekly progression scheduler
+ * Called from server startup
+ */
+export async function startWeeklyProgressionJobs() {
+  await weeklyProgressionScheduler.initialize();
+}

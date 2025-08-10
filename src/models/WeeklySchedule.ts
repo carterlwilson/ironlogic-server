@@ -5,7 +5,7 @@ export interface ITimeSlot {
   endTime: string; // "10:00", "19:30", etc.
   maxCapacity: number;
   clientIds: string[];
-  trainerIds?: string[]; // Optional trainer assignments
+  locationId: string; // Required - specifies where the session takes place
   notes?: string;
   activityType?: string; // Type of class/session
 }
@@ -19,9 +19,14 @@ export interface IWeeklySchedule extends Document {
   name: string;
   description?: string;
   
-  // Modified fields
-  locationId: string; // Instead of being global
+  // Coach-based scheduling
+  coachId: string; // References User with gym role 'trainer'/'owner'
   gymId: string; // For easy gym-level queries
+  
+  // Template/Active schedule distinction
+  isTemplate: boolean; // true for templates, false for active schedules
+  templateId?: string; // Reference to template (only for active schedules)
+  weekStartDate?: Date; // Week start date (only for active schedules)
   
   days: IWeeklyScheduleDay[];
   createdAt: Date;
@@ -48,10 +53,11 @@ const timeSlotSchema = new Schema<ITimeSlot>({
     type: String,
     trim: true
   }],
-  trainerIds: [{
+  locationId: {
     type: String,
+    required: [true, 'Location ID is required for time slot'],
     trim: true
-  }],
+  },
   notes: {
     type: String,
     trim: true
@@ -83,16 +89,51 @@ const weeklyScheduleSchema = new Schema<IWeeklySchedule>({
     trim: true
   },
   
-  // Modified fields
-  locationId: {
+  // Coach-based scheduling
+  coachId: {
     type: String,
-    required: [true, 'Location ID is required'],
+    required: [true, 'Coach ID is required'],
     trim: true
   },
   gymId: {
     type: String,
     required: [true, 'Gym ID is required'],
     trim: true
+  },
+  
+  // Template/Active schedule distinction
+  isTemplate: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  templateId: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(this: IWeeklySchedule, value: string) {
+        // templateId should only be set for active schedules (isTemplate = false)
+        if (this.isTemplate && value) {
+          return false;
+        }
+        // Active schedules should have a templateId (optional for now)
+        return true;
+      },
+      message: 'Template schedules cannot have a templateId'
+    }
+  },
+  weekStartDate: {
+    type: Date,
+    validate: {
+      validator: function(this: IWeeklySchedule, value: Date) {
+        // weekStartDate should only be set for active schedules (isTemplate = false)
+        if (this.isTemplate && value) {
+          return false;
+        }
+        return true;
+      },
+      message: 'Template schedules cannot have a weekStartDate'
+    }
   },
   
   days: [daySchema]
@@ -126,7 +167,11 @@ weeklyScheduleSchema.pre('validate', function(next) {
 });
 
 // Indexes for better query performance
-weeklyScheduleSchema.index({ locationId: 1 });
+weeklyScheduleSchema.index({ coachId: 1 });
 weeklyScheduleSchema.index({ gymId: 1 });
+weeklyScheduleSchema.index({ gymId: 1, coachId: 1 });
+weeklyScheduleSchema.index({ isTemplate: 1 });
+weeklyScheduleSchema.index({ templateId: 1 });
+weeklyScheduleSchema.index({ coachId: 1, isTemplate: 1 });
 
 export default mongoose.model<IWeeklySchedule>('WeeklySchedule', weeklyScheduleSchema); 

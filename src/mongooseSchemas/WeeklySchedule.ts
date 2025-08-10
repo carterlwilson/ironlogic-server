@@ -20,10 +20,11 @@ const timeSlotSchema = new Schema({
     type: String,
     trim: true
   }],
-  trainerIds: [{
+  locationId: {
     type: String,
+    required: [true, 'Location ID is required for time slot'],
     trim: true
-  }],
+  },
   notes: {
     type: String,
     trim: true
@@ -55,10 +56,10 @@ const weeklyScheduleSchema = new Schema({
     trim: true
   },
   
-  // Modified fields
-  locationId: {
+  // Coach-based scheduling
+  coachId: {
     type: String,
-    required: [true, 'Location ID is required'],
+    required: [true, 'Coach ID is required'],
     trim: true
   },
   gymId: {
@@ -98,7 +99,8 @@ weeklyScheduleSchema.pre('validate', function(next) {
 });
 
 // Indexes for better query performance
-weeklyScheduleSchema.index({ locationId: 1 });
+weeklyScheduleSchema.index({ coachId: 1 });
 weeklyScheduleSchema.index({ gymId: 1 });
+weeklyScheduleSchema.index({ gymId: 1, coachId: 1 });
 
 export default weeklyScheduleSchema; 

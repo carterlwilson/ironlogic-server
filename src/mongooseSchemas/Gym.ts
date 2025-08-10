@@ -42,6 +42,11 @@ const gymSchema = new Schema<IGym>({
   isActive: {
     type: Boolean,
     default: true
+  },
+  timezone: {
+    type: String,
+    required: [true, 'Timezone is required'],
+    default: 'America/New_York' // Default to EST/EDT
   }
 }, {
   timestamps: true,

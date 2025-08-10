@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## General Rules
+- When I ask you to write plans or analysis to a file, always actually write/edit the file, don't just describe what you would write.
+
 ## Development Commands
 
 ```bash

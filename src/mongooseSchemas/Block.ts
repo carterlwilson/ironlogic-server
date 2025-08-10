@@ -10,6 +10,7 @@ const weekSubSchema = new Schema({
   },
   days: [{
     id: String,
+    name: String,
     primaryLiftActivities: [{
       id: String,
       name: String,
